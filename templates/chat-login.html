@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <base target="_top" />
+    <title>Join {{ .Name }}</title>
+  </head>
+  <body bgcolor="{{ .Color }}">
+    <h1>{{ .Name }} Chat Room</h1>
+    <form action="/room/{{ .ID }}" method="POST">
+      <b>What's your nickname?</b
+      ><input type="text" name="nickname" size="25" /><br />
+      What color would you like your nickname to be?
+      <table border="1">
+        <tr>
+          {{range $i, $c := .Colors}}
+          <td bgcolor={{ $c }}>
+            &nbsp;<input
+              type="radio"
+              name="color"
+              value="{{ $c }}"
+              {{if eq $i 0}}CHECKED{{end}}
+            />&nbsp;
+          </td>
+          {{end}}
+          <td><input type="submit" value="Join!" /></td>
+        </tr>
+      </table>
+    </form>
+  </body>
+</html>

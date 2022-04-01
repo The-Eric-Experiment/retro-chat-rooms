@@ -1,0 +1,69 @@
+<html>
+
+<head>
+  <meta http-equiv="PRAGMA" content="NO-CACHE" />
+  <meta http-equiv="Expires" content="0" />
+</head>
+
+<body bgcolor="#E4E4E4">
+  <html>
+
+  <head>
+    <title>Users Currently Online:</title>
+  </head>
+
+  <table cellspacing="2" cellpadding="3" border="0" width="100%">
+    <tr>
+      <th align="left" bgcolor="#DDDDDD">Username</th>
+      <th align="right" bgcolor="#DDDDDD">Last activity:</th>
+    </tr>
+    <tr>
+      <td bgcolor="#EEEEEE">
+        <a href="/chat-talk/{{.ID}}/{{.UserID}}" target="talk">
+          <font color="#000000">
+            <strong>Everyone</strong>
+          </font>
+        </a>
+      </td>
+      <td bgcolor="#EEEEEE"></td>
+    </tr>
+    <tr>
+      {{$userID := .UserID}}
+      {{$roomID := .ID}}
+      {{range $i, $u := .Users}}
+      <td bgcolor="#EEEEEE">
+        {{if eq $u.ID $userID}}
+        {{$u | formatNickname}} <font size="-2">(Me)</font>
+        {{else}}
+        <a href="/chat-talk/{{$roomID}}/{{$userID}}?to={{$u.ID}}" target="talk">
+          {{$u | formatNickname}}
+        </a>
+        {{end}}
+      </td>
+      <td bgcolor="#EEEEEE" align="right">
+        <font size="-2">
+          <font color="#000000">{{ $u.LastActivity | formatTime}}</font>
+        </font>
+      </td>
+    </tr>
+    {{end}}
+  </table>
+  <tr>
+    <td colspan="2">
+      <center>
+        {{.UsersOnline}}{{if eq .UsersOnline 1}} user {{else}} users {{end}}
+        currently online.<br />
+        Chatroom time: <br />
+        {{ .RoomTime | formatTime}}
+      </center>
+    </td>
+  </tr>
+  <center>
+    <font size="-1"><a target="userlist"
+        href="/chat-users/{{ .ID }}/{{.UserID}}">[&nbsp;Update&nbsp;Who's&nbsp;Online&nbsp;]</a></font>
+  </center>
+
+  </html>
+</body>
+
+</html>

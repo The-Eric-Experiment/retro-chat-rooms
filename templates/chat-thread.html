@@ -1,0 +1,42 @@
+<html>
+
+<head>
+  <meta http-equiv="PRAGMA" content="NO-CACHE" />
+
+  <title>Chat window</title>
+</head>
+
+<body bgcolor="#EEEEEE">
+  {{$userId := .UserID}}
+  {{range $i, $m := .Messages }}
+  {{if (isMessageVisible $userId $m)}}
+  {{if (isMessageToSelf $userId $m)}}
+  {{ template "message-self-top" }}
+  {{end}}
+  [{{ $m.Time | formatTime }}]
+  {{if $m.IsSystemMessage}}
+  {{ template "system-message" $m }}
+  {{end}}
+  {{if not $m.IsSystemMessage}}
+  {{ $m.From | formatNickname }}
+  {{if $m.Privately}}<i>privately</i>{{end}}
+  {{if eq $m.SpeechMode "says-to" }}
+  {{ template "says-to" $m }}
+  {{else if eq $m.SpeechMode "screams-at" }}
+  {{ template "screams-at" $m }}
+  {{else if eq $m.SpeechMode "whispers-to" }}
+  {{ template "whispers-to" $m }}
+  {{end}}
+  {{end}}
+  {{if (isMessageToSelf $userId $m)}}
+  {{ template "message-self-bottom" }}
+  {{else}}
+  <br />
+  {{end}}
+  <br />
+  {{end}}
+  {{end}}
+
+</body>
+
+</html>

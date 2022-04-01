@@ -1,0 +1,16 @@
+<html>
+
+<head>
+    <title>{{ .Name }} Chat Room</title>
+</head>
+<frameset rows="110,*,110,0" border=0>
+    <frame src="/chat-header/{{ .ID }}" name="header" scrolling=no noresize>
+        <frameset cols="80%,*" border=0>
+            <frame src="/chat-thread/{{ .ID }}/{{ .UserID }}" name="listen" scrolling=auto noresize>
+                <frame src="/chat-users/{{ .ID }}/{{ .UserID }}" name="userlist" noresize>
+        </frameset>
+        <frame src="/chat-talk/{{ .ID }}/{{ .UserID }}" name="talk" scrolling=no noresize>
+            <frame src="/chat-updater/{{ .ID }}/{{ .UserID }}" name="updater" scrolling=no noresize>
+</frameset>
+
+</html>

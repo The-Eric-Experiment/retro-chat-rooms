@@ -1,0 +1,72 @@
+<html>
+
+<head>
+    <base target="listen">
+    <title></title>
+</head>
+
+<body bgcolor="#84CD7B">
+
+
+    <center>
+        <table border=0 cellpadding=0 cellspacing=0>
+            <tr>
+                <td colspan=2 bgcolor="#000000">
+                    <font size=+1 color=#FFFFFF>
+                        <b>Talk to us, Arbucle!
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td valign=top>
+                    <form name=TalkForm
+                        onSubmit="document.TalkForm.Sez.value=document.TalkForm.Sez2.value;document.TalkForm.Sez2.value='';"
+                        action="/post-message" method="POST">
+                        <input type=hidden name=Login value="Arbucle">
+                        <input type=hidden name=FA value=Talk>
+                        <input type=hidden name=color value="000000">
+                        <input type=text name="Sez2" size=45>
+                        <input type=hidden name="Sez" size=45>
+                </td>
+                <td align=center>
+                    <table border=1>
+                        <tr>
+                            <td>
+                                <input tabindex=1 type="submit" value="Talk">
+                            </td>
+                            <td>
+                                <input type=reset value="Clear">
+    </center>
+    </td>
+    </form>
+    <form target="_top" action="/scripts/Chat-N-Time/chatntime.cgi" method="POST">
+        <td>
+            <input type=hidden name=Login value="Arbucle">
+            <input type=hidden name=Logout value="yes">
+            <input type=hidden name=FA value="Logout">
+            <input type=hidden name=color value="000000">
+            <input type=submit value="Logout">
+        </td>
+    </form>
+    <form target="listen" method=GET action=/scripts/Chat-N-Time/chatntime.list.html>
+        <td>
+            <input type=hidden name=Login value=Arbucle>
+            <input type=submit value="Refresh top">
+        </td>
+    </form>
+    </tr>
+    </table>
+    </td>
+    </tr>
+    </table>
+    <hr>
+    <font size=-2>Chat-N-Time v2.9.8
+        Copyright 2001 Kristina Pfaff-Harris and can be found at
+        <a href=http://www.tesol.net/scripts />
+        http://www.tesol.net/scripts</a>.
+    </font>
+
+    <hr>
+</body>
+
+</html>

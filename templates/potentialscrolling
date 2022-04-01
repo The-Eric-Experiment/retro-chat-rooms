@@ -1,0 +1,75 @@
+// top.IE4 = true;
+
+    // function scrollit(speed) {   // stops at the end of scroll or when user holds scrollbar
+    //   top.scrolling = true;
+    //   // top.code.document.bgColor = "green";
+    //   s = speed;
+    //   top.window.listen.scrollBy(0, s);
+    //   if (top.IE4) {
+    //     if (top.previous_pageYOffset >= top.window.listen.document.body.scrollTop)
+    //       top.geduld--;
+    //   }
+    //   else {
+    //     if (top.ns > 4) {
+    //       if ((top.previous_pageYOffset >= top.window.listen.pageYOffset))
+    //         top.geduld--;
+    //     }
+    //     else
+    //       if (top.ns == 3) {
+    //         if (top.previous_pageYOffset >= top.window.listen.pageYOffset) {
+    //           //       alert ( top.ns+'Yoff='+top.window.listen.pageYOffset+'+'+top.window.listen.innerHeight+' Hei='+top.window.listen.document.height);
+    //           top.geduld = 0;
+    //         }
+    //       }
+    //       else {
+    //         if ((top.window.listen.pageYOffset + top.window.listen.innerHeight + 4 > top.window.listen.document.height) || (top.previous_pageYOffset >= top.window.listen.pageYOffset)) {
+    //           //      alert ( 'top.ns='+top.ns+';yoff='+top.window.listen.pageYOffset+'+innerH='+top.window.listen.innerHeight+'='+(top.window.listen.pageYOffset+top.window.listen.innerHeight)+' Hei='+top.window.listen.document.height);
+    //           top.geduld = 0
+    //         }
+    //       }
+    //   }
+    //   if (top.geduld > 0) {
+    //     top.scrolltimer = setTimeout('scrollit(s)', '50');
+    //   }
+    //   else {
+    //     top.scrolling = false
+    //     top.code.document.bgColor = "red";
+    //   }
+    //   top.previous_pageYOffset = top.previous_pageYOffset1;
+    //   if (top.IE4)
+    //     top.previous_pageYOffset1 = top.window.listen.document.body.scrollTop;
+    //   else
+    //     top.previous_pageYOffset1 = top.window.listen.pageYOffset;
+    // }
+
+
+    // function autoscroll(foc, reget) {
+    //   top.lastmsg = reget;
+    //   if (top.ns == 3) {
+    //     top.window.listen.scroll(0, 10000);
+    //     top.window.listen.scroll(0, 10000);
+    //   }
+    //   else {
+    //     top.previous_pageYOffset = -1;
+    //     top.geduld = 3;
+    //     if (top.scrolling == false) {
+    //       top.scrolling = true;
+    //       top.code.document.bgColor = "green";
+    //       //      clearTimeout(top.scrolltimer);
+    //       scrollit(2)
+    //     }
+    //   }
+
+    // }
+    // // top.autoscroll(false,'');
+    // top.lastmsg = '';
+    // autoscroll(true, '');
+    // top.window.listen.scroll(0, 10000);
+    // top.window.listen.scroll(0, 10000);
+    // top.window.listen.pageYOffset = 10000;
+
+    // top.window.listen.scrollBy(0, 10);
+
+    // top.window.listen.pageYOffset = 0
+    // alert(document.body.scrollBy)
+    // alert(document.body.scrollTop);

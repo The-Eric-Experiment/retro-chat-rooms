@@ -1,0 +1,56 @@
+<html>
+
+<head>
+  <base target="listen" />
+  <title></title>
+</head>
+
+<body bgcolor="#84CD7B">
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <strong>{{ .Nickname }}</strong>
+          <br />
+          <form action="" method="POST">
+            <input type="button" name="exit" value="Exit"
+              onClick="parent.listen.location='http://ericexperiment.com'" />
+          </form>
+        </td>
+        <td>
+          <form name="talkform" action="/post-message" method="POST"
+            onSubmit="document.talkform.message.value=document.talkform.message2.value;document.talkform.message2.value='';">
+            <input type="hidden" name="id" value="{{ .ID }}" />
+            <input type="hidden" name="userId" value="{{ .UserId }}" />
+            <input type="checkbox" name="private" id="private" /><label for="private">Privately</label>
+            <select name="speechMode">
+              {{ range $i, $m := .SpeechModes }}
+              <option value="{{ $m.Value }}">{{ $m.Label }}</option>
+              {{ end }}
+            </select>
+            {{if (isUserNotNil .To) }}
+            <strong>{{ .To.Nickname }}</strong>
+            <input type="hidden" name="to" value="{{ .To.ID }}" />
+            {{else}}
+            <strong>Everyone</strong>
+            {{end}}
+            <!-- <select name="with">
+                <option value="john">Send with</option>
+                <option value="bleura">Bleura</option>
+              </select>
+              <select name="type">
+                <option value="image">Send Image</option>
+                <option value="bleura">Send image</option>
+              </select> -->
+            <br />
+            <input type="text" name="message2" size="45" />
+            <input type="hidden" name="message" size="45" />
+            <input tabindex="1" type="submit" value="Send" />
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+site-name: Old'aVista Chat
+rooms:
+  - id: oldavista
+    name: Old'aVista
+    color: "#DDDDDD"
+  - id: general
+    name: General
+    color: "#84CD7B"

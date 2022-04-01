@@ -1,0 +1,21 @@
+<html>
+
+<head>
+  <meta http-equiv="PRAGMA" content="NO-CACHE" />
+  <meta http-equiv="Refresh" content="{{.MessageRate}};URL=/chat-updater/{{ .ID }}/{{.UserID}}" />
+  <meta http-equiv="Expires" content="0" />
+</head>
+
+<body bgcolor="{{.Color}}">
+  {{if .HasMessages}}
+  <script language="javascript">
+    parent.listen.location = "/chat-thread/{{ .ID }}/{{.UserID}}";
+  </script>
+  {{end}} {{if .UserListUpdated}}
+  <script language="javascript">
+    parent.userlist.location = "/chat-users/{{ .ID }}/{{.UserID}}";
+  </script>
+  {{end}}
+</body>
+
+</html>
