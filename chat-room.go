@@ -89,7 +89,7 @@ func (room *Room) RegisterUser(nickname string, color string) (*RoomUser, error)
 	user := &RoomUser{
 		ID:                 userId,
 		LastActivity:       time.Now().UTC(),
-		Nickname:           inputNickname,
+		Nickname:           nickname,
 		Color:              color,
 		LastPing:           time.Now().UTC(),
 		LastUserListUpdate: time.Now().UTC(),
