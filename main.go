@@ -223,7 +223,7 @@ func main() {
 		private := c.PostForm("private")
 
 		if len(strings.TrimSpace(message)) == 0 {
-			c.Redirect(302, "/chat-thread/"+id+"/"+userId)
+			c.Redirect(302, "/chat-updater/"+id+"/"+userId)
 			return
 		}
 
@@ -253,7 +253,7 @@ func main() {
 			SpeechMode:      mode,
 		})
 
-		c.Redirect(302, "/chat-thread/"+room.ID+"/"+user.ID)
+		c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
 	})
 
 	router.GET("/chat-updater/:id/:userId", func(c *gin.Context) {
@@ -272,15 +272,16 @@ func main() {
 		if !ok {
 			c.HTML(http.StatusOK, "chat-updater.html", gin.H{
 				"UserGone": true,
+				"ID":       room.ID,
 			})
 			return
 		}
 
-		room.UpdateMessageRate()
+		UpdateMessageRate(room, user)
 
 		_, hasMessages := lo.Find(
 			room.Messages,
-			func(m *RoomMessage) bool { return m.From.ID != user.ID && m.Time.Sub(user.LastPing).Seconds() > 0 },
+			func(m *RoomMessage) bool { return m.Time.Sub(user.LastPing).Seconds() > 0 },
 		)
 
 		userListUpdated := room.LastUserListUpdate.Sub(user.LastUserListUpdate).Seconds() > 0
@@ -290,7 +291,7 @@ func main() {
 		c.HTML(http.StatusOK, "chat-updater.html", gin.H{
 			"ID":              room.ID,
 			"UserID":          user.ID,
-			"MessageRate":     room.MessageRate,
+			"MessageRate":     user.UpdateMessageRate,
 			"HasMessages":     hasMessages,
 			"UserListUpdated": userListUpdated,
 			"Color":           room.Color,
@@ -359,5 +360,5 @@ func main() {
 			"RoomTime":    time.Now().UTC(),
 		})
 	})
-	router.Run()
+	router.Run(":8009")
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"time"
 
@@ -36,6 +37,7 @@ type RoomUser struct {
 	Color              string
 	LastPing           time.Time
 	LastUserListUpdate time.Time
+	UpdateMessageRate  int
 }
 
 type Room struct {
@@ -44,11 +46,10 @@ type Room struct {
 	Color              string `yaml:"color"`
 	Messages           []*RoomMessage
 	Users              []*RoomUser
-	MessageRate        int
 	LastUserListUpdate time.Time
 }
 
-func (room *Room) getMessageRate() int {
+func getMessageRate(room *Room, user *RoomUser) int {
 	if len(room.Messages) == 0 {
 		return USER_MAX_MESSAGE_RATE_SEC
 	}
@@ -56,9 +57,11 @@ func (room *Room) getMessageRate() int {
 	first := room.Messages[0]
 
 	now := time.Now().UTC()
-	diff := now.Sub(first.Time).Seconds()
 
-	if diff > 60 {
+	//UPDATE FAST FOR TWO MINUTES
+	diff := math.Floor(now.Sub(first.Time).Seconds() / 2)
+
+	if diff > USER_MAX_MESSAGE_RATE_SEC {
 		return USER_MAX_MESSAGE_RATE_SEC
 	}
 
@@ -69,8 +72,8 @@ func (room *Room) getMessageRate() int {
 	return int(diff)
 }
 
-func (room *Room) UpdateMessageRate() {
-	room.MessageRate = room.getMessageRate()
+func UpdateMessageRate(room *Room, user *RoomUser) {
+	user.UpdateMessageRate = getMessageRate(room, user)
 }
 
 func (room *Room) RegisterUser(nickname string, color string) (*RoomUser, error) {

@@ -13,7 +13,13 @@
   </script>
   {{end}} {{if .UserListUpdated}}
   <script language="javascript">
+    console.log("userlistupdated")
     parent.userlist.location = "/chat-users/{{ .ID }}/{{.UserID}}";
+  </script>
+  {{end}}
+  {{if .UserGone}}
+  <script language="javascript">
+    top.location = "/room/{{ .ID }}";
   </script>
   {{end}}
 </body>
