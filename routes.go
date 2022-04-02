@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"net/http"
 	"strings"
@@ -272,6 +273,12 @@ func GetChatUpdater(c *gin.Context) {
 	)
 
 	userListUpdated := room.LastUserListUpdate.Sub(user.LastUserListUpdate).Seconds() > 0
+
+	if userListUpdated {
+		user.LastUserListUpdate = time.Now().UTC()
+	}
+
+	fmt.Println(userListUpdated)
 
 	user.LastPing = time.Now().UTC()
 
