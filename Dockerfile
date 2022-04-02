@@ -18,4 +18,4 @@ RUN go build .
 
 EXPOSE 8080
 
-CMD [ "./retro-chat" ]
+CMD [ "./retro-chat-rooms" ]

@@ -1,4 +1,4 @@
-module github.com/ericmackrodt/retro-chat
+module github.com/The-Eric-Experiment/retro-chat-rooms
 
 go 1.18
 
