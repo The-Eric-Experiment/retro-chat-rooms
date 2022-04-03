@@ -50,6 +50,32 @@ var colors = []string{
 	USER_COLOR_BLUE,
 }
 
+func getSessionUserIdent(ctx *gin.Context) string {
+	uagent := ctx.Request.Header.Get("User-Agent")
+	ip := getIP(ctx)
+	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(ip+uagent)).String()
+}
+
+func getSessionValue[T any](c *gin.Context, key string) (*T, bool) {
+	userIdent := getSessionUserIdent(c)
+	session := sessions[userIdent]
+
+	if session[key] == nil {
+		return nil, false
+	}
+
+	return session[key].(*T), true
+}
+
+func setSessionValue[T any](c *gin.Context, key string, value *T) {
+	userIdent := getSessionUserIdent(c)
+	if sessions[userIdent] == nil {
+		sessions[userIdent] = UserSession{}
+	}
+
+	sessions[userIdent][key] = value
+}
+
 func getIP(c *gin.Context) string {
 	headers := [4]string{
 		"HTTP_CF_CONNECTING_IP", "HTTP_X_REAL_IP", "HTTP_X_FORWARDED_FOR", "REMOTE_ADDR",
@@ -63,12 +89,6 @@ func getIP(c *gin.Context) string {
 	}
 
 	return ""
-}
-
-func getSessionUserIdent(ctx *gin.Context) string {
-	uagent := ctx.Request.Header.Get("User-Agent")
-	ip := getIP(ctx)
-	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(ip+uagent)).String()
 }
 
 func checkUserStatus() {
@@ -233,7 +253,9 @@ func PostMessage(c *gin.Context) {
 
 	// Check if user has screamed recently
 
-	if now.Sub(user.LastScream).Minutes() <= USER_SCREAM_TIMEOUT_MIN && mode == MODE_SCREAM_AT {
+	lastScream, hasValue := getSessionValue[time.Time](c, "lastScream")
+
+	if hasValue && now.Sub(*lastScream).Minutes() <= USER_SCREAM_TIMEOUT_MIN && mode == MODE_SCREAM_AT {
 		room.SendMessage(&RoomMessage{
 			Time:            now,
 			To:              user,
@@ -251,7 +273,7 @@ func PostMessage(c *gin.Context) {
 	userTo, _ := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == to })
 
 	if mode == MODE_SCREAM_AT {
-		user.LastScream = now
+		setSessionValue[time.Time](c, "lastScream", &now)
 	}
 
 	room.SendMessage(&RoomMessage{

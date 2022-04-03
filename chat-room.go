@@ -41,7 +41,6 @@ type RoomUser struct {
 	LastUserListUpdate time.Time
 	UpdateMessageRate  int
 	SessionIdent       string
-	LastScream         time.Time
 }
 
 type Room struct {
@@ -99,7 +98,6 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 		LastPing:           now,
 		LastUserListUpdate: now,
 		SessionIdent:       sessionIdent,
-		LastScream:         now.AddDate(0, 0, -1),
 	}
 
 	room.Users = append(room.Users, user)
