@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -128,7 +129,7 @@ func PostRoom(c *gin.Context) {
 		return
 	}
 
-	user, err := room.RegisterUser(nickname, color)
+	user, err := room.RegisterUser(nickname, color, userIdent)
 
 	if err != nil {
 		c.HTML(http.StatusOK, "chat-login.html", gin.H{
@@ -209,6 +210,7 @@ func PostMessage(c *gin.Context) {
 	to := c.PostForm("to")
 	mode := c.PostForm("speechMode")
 	private := c.PostForm("private")
+	now := time.Now().UTC()
 
 	if len(strings.TrimSpace(message)) == 0 {
 		c.Redirect(302, "/chat-updater/"+id+"/"+userId)
@@ -222,17 +224,38 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
-	user, ok := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
+	user, ok := room.GetUser(userId)
 
 	if !ok {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
+	// Check if user has screamed recently
+
+	if now.Sub(user.LastScream).Minutes() <= USER_SCREAM_TIMEOUT_MIN && mode == MODE_SCREAM_AT {
+		room.SendMessage(&RoomMessage{
+			Time:            now,
+			To:              user,
+			From:            user,
+			IsSystemMessage: true,
+			Message:         "Hi {nickname}, you're only allowed to scream once very " + strconv.FormatInt(int64(USER_SCREAM_TIMEOUT_MIN), 10) + " minutes.",
+			Privately:       true,
+			SpeechMode:      MODE_SAY_TO,
+		})
+
+		c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
+		return
+	}
+
 	userTo, _ := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == to })
 
+	if mode == MODE_SCREAM_AT {
+		user.LastScream = now
+	}
+
 	room.SendMessage(&RoomMessage{
-		Time:            time.Now().UTC(),
+		Time:            now,
 		Message:         message,
 		From:            user,
 		To:              userTo,

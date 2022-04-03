@@ -14,6 +14,8 @@ const MAX_MESSAGES = 200
 const USER_LOGOUT_TIMEOUT = 120
 const USER_MAX_MESSAGE_RATE_SEC = 60
 const USER_MIN_MESSAGE_RATE_SEC = 2
+const USER_SCREAM_TIMEOUT_MIN float64 = 2
+const CHILL_OUT_TIMEOUT_MIN float64 = 2
 
 type SpeechMode struct {
 	Value string
@@ -38,6 +40,8 @@ type RoomUser struct {
 	LastPing           time.Time
 	LastUserListUpdate time.Time
 	UpdateMessageRate  int
+	SessionIdent       string
+	LastScream         time.Time
 }
 
 type Room struct {
@@ -76,7 +80,8 @@ func UpdateMessageRate(room *Room, user *RoomUser) {
 	user.UpdateMessageRate = getMessageRate(room, user)
 }
 
-func (room *Room) RegisterUser(nickname string, color string) (*RoomUser, error) {
+func (room *Room) RegisterUser(nickname string, color string, sessionIdent string) (*RoomUser, error) {
+	now := time.Now().UTC()
 	inputNickname := strings.ToLower(strings.TrimSpace(nickname))
 	_, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.Nickname == inputNickname })
 
@@ -88,11 +93,13 @@ func (room *Room) RegisterUser(nickname string, color string) (*RoomUser, error)
 
 	user := &RoomUser{
 		ID:                 userId,
-		LastActivity:       time.Now().UTC(),
+		LastActivity:       now,
 		Nickname:           nickname,
 		Color:              color,
-		LastPing:           time.Now().UTC(),
-		LastUserListUpdate: time.Now().UTC(),
+		LastPing:           now,
+		LastUserListUpdate: now,
+		SessionIdent:       sessionIdent,
+		LastScream:         now.AddDate(0, 0, -1),
 	}
 
 	room.Users = append(room.Users, user)
@@ -133,4 +140,8 @@ func (room *Room) SendMessage(message *RoomMessage) {
 	if len(room.Messages) > MAX_MESSAGES {
 		room.Messages = room.Messages[0:MAX_MESSAGES]
 	}
+}
+
+func (room *Room) GetUser(userId string) (*RoomUser, bool) {
+	return lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
 }
