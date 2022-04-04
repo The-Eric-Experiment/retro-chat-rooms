@@ -78,7 +78,9 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 		SessionIdent:       sessionIdent,
 	}
 
+	room.mutex.Lock()
 	room.Users = append(room.Users, user)
+	room.mutex.Unlock()
 
 	room.SendMessage(&RoomMessage{
 		Time:            time.Now().UTC(),

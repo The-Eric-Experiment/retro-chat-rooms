@@ -252,6 +252,25 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
+	// Check if there's slurs
+
+	if HasBlockedWords(message) {
+		room.SendMessage(&RoomMessage{
+			Time:            now,
+			To:              user,
+			From:            user,
+			IsSystemMessage: true,
+			Message:         "Come on {nickname}! Let's be nice! This is a place for having fun!",
+			Privately:       true,
+			SpeechMode:      MODE_SAY_TO,
+		})
+
+		c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
+		return
+	}
+
+	message = ReplaceSensoredProfanity(message)
+
 	// Check if user has screamed recently
 
 	lastScream, hasValue := getSessionValue[time.Time](c, "lastScream")

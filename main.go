@@ -63,6 +63,7 @@ func getAllTemplates() []string {
 }
 
 func main() {
+	LoadProfanityFilters()
 	go checkUserStatus()
 
 	router := gin.Default()
