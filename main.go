@@ -94,5 +94,9 @@ func main() {
 	router.GET("/chat-users/:id/:userId", GetChatUsers)
 	router.GET("/chaptcha", GetChaptcha)
 
+	for _, room := range rooms {
+		room.chatEventAwaiter.Initialize()
+	}
+
 	router.Run()
 }

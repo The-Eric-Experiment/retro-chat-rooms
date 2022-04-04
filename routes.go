@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"image/gif"
 	"net/http"
 	"strconv"
 	"strings"
@@ -273,7 +274,7 @@ func PostMessage(c *gin.Context) {
 	userTo, _ := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == to })
 
 	if mode == MODE_SCREAM_AT {
-		setSessionValue[time.Time](c, "lastScream", &now)
+		setSessionValue(c, "lastScream", &now)
 	}
 
 	room.SendMessage(&RoomMessage{
@@ -285,6 +286,8 @@ func PostMessage(c *gin.Context) {
 		Privately:       private == "on",
 		SpeechMode:      mode,
 	})
+
+	room.Update()
 
 	c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
 }
@@ -310,8 +313,6 @@ func GetChatUpdater(c *gin.Context) {
 		return
 	}
 
-	UpdateMessageRate(room, user)
-
 	_, hasMessages := lo.Find(
 		room.Messages,
 		func(m *RoomMessage) bool { return m.Time.Sub(user.LastPing).Seconds() > 0 },
@@ -327,14 +328,28 @@ func GetChatUpdater(c *gin.Context) {
 
 	user.LastPing = time.Now().UTC()
 
-	c.HTML(http.StatusOK, "chat-updater.html", gin.H{
-		"ID":              room.ID,
-		"UserID":          user.ID,
-		"MessageRate":     user.UpdateMessageRate,
-		"HasMessages":     hasMessages,
-		"UserListUpdated": userListUpdated,
-		"Color":           room.Color,
+	getData := func() gin.H {
+		return gin.H{
+			"ID":              room.ID,
+			"UserID":          user.ID,
+			"HasMessages":     hasMessages,
+			"UserListUpdated": userListUpdated,
+			"Color":           room.Color,
+		}
+	}
+
+	if userListUpdated || hasMessages {
+		c.HTML(http.StatusOK, "chat-updater.html", getData())
+		return
+	}
+
+	result := make(chan gin.H)
+
+	room.chatEventAwaiter.Await(c, func(context *gin.Context) {
+		result <- getData()
 	})
+
+	c.HTML(http.StatusOK, "chat-updater.html", <-result)
 }
 
 func GetChatTalk(c *gin.Context) {
@@ -420,5 +435,7 @@ func GetChaptcha(ctx *gin.Context) {
 		"captcha": data.Text,
 	}
 
-	data.WriteImage(ctx.Writer)
+	data.WriteGIF(ctx.Writer, &gif.Options{
+		NumColors: 256,
+	})
 }

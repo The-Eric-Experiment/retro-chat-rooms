@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,6 +16,7 @@ const USER_MAX_MESSAGE_RATE_SEC = 60
 const USER_MIN_MESSAGE_RATE_SEC = 2
 const USER_SCREAM_TIMEOUT_MIN float64 = 2
 const CHILL_OUT_TIMEOUT_MIN float64 = 2
+const UPDATER_WAIT_TIMEOUT_MS = 30000
 
 type SpeechMode struct {
 	Value string
@@ -39,7 +40,6 @@ type RoomUser struct {
 	Color              string
 	LastPing           time.Time
 	LastUserListUpdate time.Time
-	UpdateMessageRate  int
 	SessionIdent       string
 }
 
@@ -50,39 +50,17 @@ type Room struct {
 	Messages           []*RoomMessage
 	Users              []*RoomUser
 	LastUserListUpdate time.Time
-}
-
-func getMessageRate(room *Room, user *RoomUser) int {
-	if len(room.Messages) == 0 {
-		return USER_MAX_MESSAGE_RATE_SEC
-	}
-
-	first := room.Messages[0]
-
-	now := time.Now().UTC()
-
-	//UPDATE FAST FOR TWO MINUTES
-	diff := math.Floor(now.Sub(first.Time).Seconds() / 2)
-
-	if diff > USER_MAX_MESSAGE_RATE_SEC {
-		return USER_MAX_MESSAGE_RATE_SEC
-	}
-
-	if diff < USER_MIN_MESSAGE_RATE_SEC {
-		return USER_MIN_MESSAGE_RATE_SEC
-	}
-
-	return int(diff)
-}
-
-func UpdateMessageRate(room *Room, user *RoomUser) {
-	user.UpdateMessageRate = getMessageRate(room, user)
+	mutex              sync.Mutex
+	chatEventAwaiter   ChatEventAwaiter
 }
 
 func (room *Room) RegisterUser(nickname string, color string, sessionIdent string) (*RoomUser, error) {
 	now := time.Now().UTC()
 	inputNickname := strings.ToLower(strings.TrimSpace(nickname))
+
+	room.mutex.Lock()
 	_, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.Nickname == inputNickname })
+	room.mutex.Unlock()
 
 	if found {
 		return nil, errors.New("user exists")
@@ -113,13 +91,17 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 
 	room.LastUserListUpdate = time.Now().UTC()
 
+	room.Update()
+
 	return user, nil
 }
 
 func (room *Room) DeregisterUser(user *RoomUser) {
+	room.mutex.Lock()
 	room.Users = lo.Filter(room.Users, func(u *RoomUser, _ int) bool {
 		return u.ID != user.ID
 	})
+	room.mutex.Unlock()
 
 	room.SendMessage(&RoomMessage{
 		Time:            time.Now().UTC(),
@@ -131,9 +113,13 @@ func (room *Room) DeregisterUser(user *RoomUser) {
 	})
 
 	room.LastUserListUpdate = time.Now().UTC()
+
+	room.Update()
 }
 
 func (room *Room) SendMessage(message *RoomMessage) {
+	defer room.mutex.Unlock()
+	room.mutex.Lock()
 	room.Messages = append([]*RoomMessage{message}, room.Messages...)
 	if len(room.Messages) > MAX_MESSAGES {
 		room.Messages = room.Messages[0:MAX_MESSAGES]
@@ -141,5 +127,11 @@ func (room *Room) SendMessage(message *RoomMessage) {
 }
 
 func (room *Room) GetUser(userId string) (*RoomUser, bool) {
+	defer room.mutex.Unlock()
+	room.mutex.Lock()
 	return lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
+}
+
+func (room *Room) Update() {
+	room.chatEventAwaiter.Dispatch()
 }

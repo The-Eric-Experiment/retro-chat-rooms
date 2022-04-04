@@ -43,6 +43,7 @@
     // }
 
 
+
     // function autoscroll(foc, reget) {
     //   top.lastmsg = reget;
     //   if (top.ns == 3) {
@@ -67,6 +68,8 @@
     // top.window.listen.scroll(0, 10000);
     // top.window.listen.scroll(0, 10000);
     // top.window.listen.pageYOffset = 10000;
+
+    top.window.listen.scrollTo(0, 10000);
 
     // top.window.listen.scrollBy(0, 10);
 
