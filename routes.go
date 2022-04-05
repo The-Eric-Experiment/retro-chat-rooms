@@ -89,7 +89,9 @@ func checkUserStatus() {
 }
 
 func GetIndex(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{})
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"Rooms": rooms,
+	})
 }
 
 func GetRoom(c *gin.Context) {
@@ -102,7 +104,7 @@ func GetRoom(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "chat-login.html", gin.H{
+	c.HTML(http.StatusOK, "join.html", gin.H{
 		"Colors": colors,
 		"Color":  room.Color,
 		"ID":     room.ID,
@@ -383,6 +385,7 @@ func GetChatTalk(c *gin.Context) {
 		"UserId":      user.ID,
 		"Nickname":    user.Nickname,
 		"To":          to,
+		"Color":       room.Color,
 		"SpeechModes": speechModes,
 	})
 }

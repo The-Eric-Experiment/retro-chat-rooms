@@ -79,6 +79,7 @@ func main() {
 		"formatNickname":   formatNickname,
 		"isMessageVisible": isMessageVisible,
 		"isMessageToSelf":  isMessageToSelf,
+		"countUsers":       countUsers,
 	})
 
 	templates := getAllTemplates()

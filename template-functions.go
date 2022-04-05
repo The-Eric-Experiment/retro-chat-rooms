@@ -45,3 +45,7 @@ func isMessageToSelf(userId string, message *RoomMessage) bool {
 
 	return userId == message.To.ID
 }
+
+func countUsers(input []*RoomUser) int {
+	return len(input)
+}

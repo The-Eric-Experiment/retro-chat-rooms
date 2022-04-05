@@ -46,6 +46,7 @@ type RoomUser struct {
 type Room struct {
 	ID                 string `yaml:"id"`
 	Name               string `yaml:"name"`
+	Description        string `yaml:"description"`
 	Color              string `yaml:"color"`
 	Messages           []*RoomMessage
 	Users              []*RoomUser

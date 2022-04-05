@@ -1,8 +1,34 @@
 site-name: Old'aVista Chat
 rooms:
-  - id: oldavista
-    name: Old'aVista
-    color: "#DDDDDD"
   - id: general
     name: General
+    description: General chit-chat about any subject
+    color: "#CDCFC3"
+  - id: oldavista
+    name: Old'aVista
+    description: Suggestions, issues or just want to chat about Old'aVista? This is the room for that!
+    color: "#457AE5"
+  - id: the-eric-experiment-youtube
+    name: The Eric Experiment Youtube
+    description: Suggestions and discussions about The Eric Experiment videos.
+    color: "#FEB633"
+  - id: internet-of-old
+    name: Internet of Old
+    description: Let's discuss our favorite websites from the Web 1.0!
+    color: "#FFCC66"
+  - id: retro-gaming
+    name: Retro Gaming
+    description: The place to talk about old video games and consoles.
+    color: "#E84550"
+  - id: retro-computing
+    name: Retro Computing
+    description: The place to talk about old computers, hardware and software.
     color: "#84CD7B"
+  - id: modern-gaming
+    name: Modern Gaming
+    description: If you want to discuss modern gaming, this is the right place to do so.
+    color: "#408FD5"
+  - id: modern-computing
+    name: Modern Computing
+    description: Wanna talk about that new Intel or AMD cpu launch or how you managed to buy a Geforce card at MSRP? This is the room for that!
+    color: "#FF530D"
