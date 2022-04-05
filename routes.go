@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/steambap/captcha"
 )
@@ -49,47 +48,6 @@ var colors = []string{
 	USER_COLOR_ORANGE,
 	USER_COLOR_RED,
 	USER_COLOR_BLUE,
-}
-
-func getSessionUserIdent(ctx *gin.Context) string {
-	uagent := ctx.Request.Header.Get("User-Agent")
-	ip := getIP(ctx)
-	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(ip+uagent)).String()
-}
-
-func getSessionValue[T any](c *gin.Context, key string) (*T, bool) {
-	userIdent := getSessionUserIdent(c)
-	session := sessions[userIdent]
-
-	if session[key] == nil {
-		return nil, false
-	}
-
-	return session[key].(*T), true
-}
-
-func setSessionValue[T any](c *gin.Context, key string, value *T) {
-	userIdent := getSessionUserIdent(c)
-	if sessions[userIdent] == nil {
-		sessions[userIdent] = UserSession{}
-	}
-
-	sessions[userIdent][key] = value
-}
-
-func getIP(c *gin.Context) string {
-	headers := [4]string{
-		"HTTP_CF_CONNECTING_IP", "HTTP_X_REAL_IP", "HTTP_X_FORWARDED_FOR", "REMOTE_ADDR",
-	}
-
-	for _, headerKey := range headers {
-		ip := c.Request.Header.Get(headerKey)
-		if ip != "" {
-			return ip
-		}
-	}
-
-	return ""
 }
 
 func checkUserStatus() {
@@ -133,12 +91,9 @@ func PostRoom(c *gin.Context) {
 	nickname := c.PostForm("ni")
 	color := c.PostForm("co")
 	captcha := c.PostForm("chap")
+	sessionCaptcha, found := session.GetSessionValue(c, "captcha")
 
-	userIdent := getSessionUserIdent(c)
-	userSess := sessions[userIdent]
-	sessionCaptcha := userSess["captcha"].(string)
-
-	if sessionCaptcha != captcha {
+	if !found || sessionCaptcha.(string) != captcha {
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -150,6 +105,7 @@ func PostRoom(c *gin.Context) {
 		return
 	}
 
+	userIdent := GetSessionUserIdent(c)
 	user, err := room.RegisterUser(nickname, color, userIdent)
 
 	if err != nil {
@@ -273,9 +229,9 @@ func PostMessage(c *gin.Context) {
 
 	// Check if user has screamed recently
 
-	lastScream, hasValue := getSessionValue[time.Time](c, "lastScream")
+	lastScream, hasValue := session.GetSessionValue(c, "lastScream")
 
-	if hasValue && now.Sub(*lastScream).Minutes() <= USER_SCREAM_TIMEOUT_MIN && mode == MODE_SCREAM_AT {
+	if hasValue && now.Sub(*lastScream.(*time.Time)).Minutes() <= USER_SCREAM_TIMEOUT_MIN && mode == MODE_SCREAM_AT {
 		room.SendMessage(&RoomMessage{
 			Time:            now,
 			To:              user,
@@ -293,7 +249,7 @@ func PostMessage(c *gin.Context) {
 	userTo, _ := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == to })
 
 	if mode == MODE_SCREAM_AT {
-		setSessionValue(c, "lastScream", &now)
+		session.SetSessionValue(c, "lastScream", &now)
 	}
 
 	room.SendMessage(&RoomMessage{
@@ -435,7 +391,6 @@ func GetChatUsers(c *gin.Context) {
 }
 
 func GetChaptcha(ctx *gin.Context) {
-	ident := getSessionUserIdent(ctx)
 	data, err := captcha.NewMathExpr(222, 122, func(options *captcha.Options) {
 		options.FontScale = 1
 		options.BackgroundColor = color.White
@@ -450,11 +405,33 @@ func GetChaptcha(ctx *gin.Context) {
 		return
 	}
 
-	sessions[ident] = UserSession{
-		"captcha": data.Text,
-	}
+	session.SetSessionValue(ctx, "captcha", data.Text)
 
 	data.WriteGIF(ctx.Writer, &gif.Options{
 		NumColors: 256,
 	})
+}
+
+func PostLogout(c *gin.Context) {
+	id := c.PostForm("id")
+	userId := c.PostForm("userId")
+
+	room, ok := lo.Find(rooms, func(r *Room) bool { return r.ID == id })
+
+	if !ok {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	user, ok := room.GetUser(userId)
+
+	if !ok {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	room.DeregisterUser(user)
+	session.DeregisterSession(c)
+
+	c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
 }

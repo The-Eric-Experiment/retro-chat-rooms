@@ -31,13 +31,11 @@ func LoadConfig() Config {
 	return c
 }
 
+var session = Session{}
+
 var config = LoadConfig()
 
 var rooms = config.Rooms
-
-type UserSession map[string]interface{}
-
-var sessions = make(map[string]UserSession)
 
 func getAllTemplates() []string {
 	templates := make([]string, 0)
@@ -64,6 +62,7 @@ func getAllTemplates() []string {
 
 func main() {
 	LoadProfanityFilters()
+	session.Initialize()
 	go checkUserStatus()
 
 	router := gin.Default()
@@ -94,6 +93,7 @@ func main() {
 	router.GET("/chat-talk/:id/:userId", GetChatTalk)
 	router.GET("/chat-users/:id/:userId", GetChatUsers)
 	router.GET("/chaptcha", GetChaptcha)
+	router.POST("/logout", PostLogout)
 
 	for _, room := range rooms {
 		room.chatEventAwaiter.Initialize()

@@ -12,9 +12,10 @@
         <td>
           <strong>{{ .Nickname }}</strong>
           <br />
-          <form action="" method="POST">
-            <input type="button" name="exit" value="Exit"
-              onClick="parent.listen.location='http://ericexperiment.com'" />
+          <form action="/logout" method="POST">
+            <input type="hidden" name="id" value="{{ .ID }}" />
+            <input type="hidden" name="userId" value="{{ .UserId }}" />
+            <input type="submit" name="exit" value="Exit" />
           </form>
         </td>
         <td>
