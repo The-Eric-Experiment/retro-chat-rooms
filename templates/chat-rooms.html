@@ -2,11 +2,13 @@
 <ul>
   {{ range $i, $r := .Rooms }}
   <li>
-      <a href="/room/{{ $r.ID }}"><font face="arial,helvetica" color="{{ $r.Color }}" size="4"><strong>{{ $r.Name }}</strong></font></a>
-      <font face="arial,helvetica">
-        ({{ $r.Users | countUsers }} Online)
-      </font><br>
-      <font face="arial,helvetica" size="-1">{{ $r.Description }}</font><br><br>
+    <a href="/room/{{ $r.ID }}">
+      <font face="arial,helvetica" color="{{ $r.Color }}" size="4"><strong>{{ $r.Name }}</strong></font>
+    </a>&nbsp;
+    <font face="arial,helvetica">
+      ({{ $r.Users | countUsers }} Online)
+    </font><br>
+    <font face="arial,helvetica" size="-1">{{ $r.Description }}</font><br><br>
   </li>
   {{ end }}
 </ul>
