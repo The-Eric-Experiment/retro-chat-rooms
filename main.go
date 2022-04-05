@@ -63,7 +63,10 @@ func getAllTemplates() []string {
 func main() {
 	LoadProfanityFilters()
 	session.Initialize()
+
+	// Background Tasks
 	go checkUserStatus()
+	go sessionCleanup()
 
 	router := gin.Default()
 

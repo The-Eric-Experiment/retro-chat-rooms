@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 func getIP(c *gin.Context) string {
@@ -63,9 +64,14 @@ func (s *Session) SetSessionValue(c *gin.Context, key string, value interface{})
 	s.sessions[userIdent][key] = value
 }
 
-func (s *Session) DeregisterSession(c *gin.Context) {
+func (s *Session) DeregisterSession(userIdent string) {
 	defer s.mu.Unlock()
 	s.mu.Lock()
-	userIdent := GetSessionUserIdent(c)
 	delete(s.sessions, userIdent)
+}
+
+func (s *Session) GetSessionIds() []string {
+	defer s.mu.Unlock()
+	s.mu.Lock()
+	return lo.Keys(s.sessions)
 }

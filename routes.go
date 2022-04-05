@@ -50,6 +50,30 @@ var colors = []string{
 	USER_COLOR_BLUE,
 }
 
+func sessionCleanup() {
+	for {
+		sessionIds := session.GetSessionIds()
+
+		sessionIds = lo.Filter(sessionIds, func(sessionId string, _ int) bool {
+			for _, room := range rooms {
+				for _, user := range room.Users {
+					if user.SessionIdent == sessionId {
+						return false
+					}
+				}
+			}
+
+			return true
+		})
+
+		for _, id := range sessionIds {
+			session.DeregisterSession(id)
+		}
+
+		time.Sleep(120000 * time.Millisecond)
+	}
+}
+
 func checkUserStatus() {
 	for {
 		for _, room := range rooms {
@@ -431,7 +455,6 @@ func PostLogout(c *gin.Context) {
 	}
 
 	room.DeregisterUser(user)
-	session.DeregisterSession(c)
 
 	c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
 }
