@@ -121,6 +121,10 @@ func main() {
 	LoadProfanityFilters()
 	session.Initialize()
 
+	for _, room := range rooms {
+		room.Initialize()
+	}
+
 	// Background Tasks
 	go checkUserStatus()
 	go sessionCleanup()

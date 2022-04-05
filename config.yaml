@@ -9,7 +9,7 @@ rooms:
     description: Suggestions, issues or just want to chat about Old'aVista? This is the room for that!
     color: "#457AE5"
   - id: the-eric-experiment-youtube
-    name: The Eric Experiment Youtube
+    name: The Eric Experiment
     description: Suggestions and discussions about The Eric Experiment videos.
     color: "#FEB633"
   - id: internet-of-old
@@ -27,8 +27,8 @@ rooms:
   - id: modern-gaming
     name: Modern Gaming
     description: If you want to discuss modern gaming, this is the right place to do so.
-    color: "#408FD5"
+    color: "#006FCD"
   - id: modern-computing
     name: Modern Computing
     description: Wanna talk about that new Intel or AMD cpu launch or how you managed to buy a Geforce card at MSRP? This is the room for that!
-    color: "#FF530D"
+    color: "#ED1C24"

@@ -105,10 +105,12 @@ func GetRoom(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "join.html", gin.H{
-		"Colors": colors,
-		"Color":  room.Color,
-		"ID":     room.ID,
-		"Name":   room.Name,
+		"Colors":      colors,
+		"Color":       room.Color,
+		"TextColor":   room.TextColor,
+		"Description": room.Description,
+		"ID":          room.ID,
+		"Name":        room.Name,
 	})
 }
 

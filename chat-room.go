@@ -2,11 +2,13 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/samber/lo"
 )
 
@@ -53,6 +55,29 @@ type Room struct {
 	LastUserListUpdate time.Time
 	mutex              sync.Mutex
 	chatEventAwaiter   ChatEventAwaiter
+	TextColor          string
+}
+
+func determineTextColor(color string) string {
+	c, err := colorful.Hex(color)
+	if err != nil {
+		return "#000000"
+	}
+
+	_, _, luminance := c.HSLuv()
+
+	fmt.Println(luminance)
+
+	if (luminance * 100) > 60 {
+		return "#000000"
+	}
+
+	return "#FFFFFF"
+}
+
+func (room *Room) Initialize() {
+	room.TextColor = determineTextColor(room.Color)
+	fmt.Println(room.Name, room.TextColor)
 }
 
 func (room *Room) RegisterUser(nickname string, color string, sessionIdent string) (*RoomUser, error) {
