@@ -105,6 +105,7 @@ func GetRoom(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "join.html", gin.H{
+		"Errors":      make([]string, 0),
 		"Colors":      colors,
 		"Color":       room.Color,
 		"TextColor":   room.TextColor,
@@ -119,25 +120,38 @@ func PostRoom(c *gin.Context) {
 	nickname := c.PostForm("ni")
 	color := c.PostForm("co")
 	captcha := c.PostForm("chap")
-	sessionCaptcha, found := session.GetSessionValue(c, "captcha")
-
-	if !found || sessionCaptcha.(string) != captcha {
-		c.Status(http.StatusBadRequest)
-		return
-	}
+	sessionCaptcha, foundCaptcha := session.GetSessionValue(c, "captcha")
 
 	room, ok := lo.Find(rooms, func(r *Room) bool { return r.ID == id })
 
 	if !ok {
-		c.Status(http.StatusNotFound)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 
 	userIdent := GetSessionUserIdent(c)
 	user, err := room.RegisterUser(nickname, color, userIdent)
+	errors := make([]string, 0)
 
 	if err != nil {
-		c.HTML(http.StatusOK, "chat-login.html", gin.H{
+		errors = append(errors, "Couldn't register user, try again.")
+	}
+
+	if nickname == "" {
+		errors = append(errors, "No nickname was entered in the form.")
+	}
+
+	if IsProfaneNickname(nickname) {
+		errors = append(errors, "This nickname is not allowed.")
+	}
+
+	if !foundCaptcha || sessionCaptcha.(string) != captcha {
+		errors = append(errors, "The entered captcha is invalid.")
+	}
+
+	if len(errors) > 0 {
+		c.HTML(http.StatusOK, "join.html", gin.H{
+			"Errors": errors,
 			"Colors": colors,
 			"ID":     room.ID,
 			"Name":   room.Name,

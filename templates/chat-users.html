@@ -15,7 +15,6 @@
   <table cellspacing="2" cellpadding="3" border="0" width="100%">
     <tr>
       <th align="left" bgcolor="#DDDDDD">Username</th>
-      <th align="right" bgcolor="#DDDDDD">Last activity:</th>
     </tr>
     <tr>
       <td bgcolor="#EEEEEE">
@@ -25,7 +24,6 @@
           </font>
         </a>
       </td>
-      <td bgcolor="#EEEEEE"></td>
     </tr>
     <tr>
       {{$userID := .UserID}}
@@ -39,11 +37,6 @@
           {{$u | formatNickname}}
         </a>
         {{end}}
-      </td>
-      <td bgcolor="#EEEEEE" align="right">
-        <font size="-2">
-          <font color="#000000">{{ $u.LastActivity | formatTime}}</font>
-        </font>
       </td>
     </tr>
     {{end}}

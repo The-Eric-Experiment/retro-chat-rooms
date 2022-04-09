@@ -75,6 +75,7 @@ func LoadTemplates(router *gin.Engine) {
 		"isMessageVisible": isMessageVisible,
 		"isMessageToSelf":  isMessageToSelf,
 		"countUsers":       countUsers,
+		"hasStrings":       hasStrings,
 	}
 
 	templates := getAllTemplates()

@@ -81,3 +81,24 @@ func HasBlockedWords(input string) bool {
 
 	return false
 }
+
+func IsProfaneNickname(input string) bool {
+	lowered := strings.ToLower(input)
+
+	if HasBlockedWords(lowered) {
+		return true
+	}
+
+	words := strings.Split(input, " ")
+
+	for _, word := range words {
+		if word == "" {
+			continue
+		}
+		if lo.Contains(censored, strings.ToLower(word)) {
+			return true
+		}
+	}
+
+	return false
+}

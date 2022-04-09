@@ -49,3 +49,7 @@ func isMessageToSelf(userId string, message *RoomMessage) bool {
 func countUsers(input []*RoomUser) int {
 	return len(input)
 }
+
+func hasStrings(input []string) bool {
+	return len(input) > 0
+}
