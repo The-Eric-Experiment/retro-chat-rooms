@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  retro-chat:
+    image: retro-chat
+    build:
+      context: ~/retro-chat-runner/_work/retro-chat/retro-chat
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:8080:9010"
+    volumes:
+      - ./custom-templates:/app/custom-templates
+      - ./config.yaml:/app/config.yaml
+      - ./public:/app/public
+    networks:
+      - your-network
+    restart: always
