@@ -1,0 +1,11 @@
+site-name: My Chat!
+chat-room-header-logo: /public/headerimage.gif
+rooms:
+  - id: general
+    name: General
+    description: General chit-chat about any subject
+    color: "#CDCFC3"
+  - id: other-room
+    name: Other Room
+    description: Describe the other room
+    color: "#95C6FA"
