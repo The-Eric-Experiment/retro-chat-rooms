@@ -10,7 +10,9 @@
     <tbody>
       <tr>
         <td>
-          <strong>{{ .Nickname }}</strong>
+          <font color="{{ .TextColor }}">
+            <strong>{{ .Nickname }}</strong>
+          </font>
           <br />
           <form action="/logout" method="POST">
             <input type="hidden" name="id" value="{{ .ID }}" />
@@ -23,26 +25,24 @@
             onSubmit="document.talkform.message.value=document.talkform.message2.value;document.talkform.message2.value='';">
             <input type="hidden" name="id" value="{{ .ID }}" />
             <input type="hidden" name="userId" value="{{ .UserId }}" />
-            <input type="checkbox" name="private" id="private" /><label for="private">Privately</label>
+            <input type="checkbox" name="private" id="private" /><label for="private">
+              <font color="{{ .TextColor }}">Privately</font>
+            </label>&nbsp;
             <select name="speechMode">
               {{ range $i, $m := .SpeechModes }}
               <option value="{{ $m.Value }}">{{ $m.Label }}</option>
               {{ end }}
-            </select>
+            </select>&nbsp;
             {{if (isUserNotNil .To) }}
-            <strong>{{ .To.Nickname }}</strong>
+            <font color="{{ .TextColor }}">
+              <strong>{{ .To.Nickname }}</strong>
+            </font>
             <input type="hidden" name="to" value="{{ .To.ID }}" />
             {{else}}
-            <strong>Everyone</strong>
+            <font color="{{ .TextColor }}">
+              <strong>Everyone</strong>
+            </font>
             {{end}}
-            <!-- <select name="with">
-                <option value="john">Send with</option>
-                <option value="bleura">Bleura</option>
-              </select>
-              <select name="type">
-                <option value="image">Send Image</option>
-                <option value="bleura">Send image</option>
-              </select> -->
             <br />
             <input type="text" name="message2" size="45" />
             <input type="hidden" name="message" size="45" />

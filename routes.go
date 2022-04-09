@@ -151,10 +151,12 @@ func PostRoom(c *gin.Context) {
 
 	if len(errors) > 0 {
 		c.HTML(http.StatusOK, "join.html", gin.H{
-			"Errors": errors,
-			"Colors": colors,
-			"ID":     room.ID,
-			"Name":   room.Name,
+			"Errors":    errors,
+			"Colors":    colors,
+			"Color":     room.Color,
+			"TextColor": room.TextColor,
+			"ID":        room.ID,
+			"Name":      room.Name,
 		})
 		return
 	}
@@ -197,8 +199,9 @@ func GetChatHeader(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "chat-header.html", gin.H{
-		"Name":  room.Name,
-		"Color": room.Color,
+		"Name":      room.Name,
+		"Color":     room.Color,
+		"TextColor": room.TextColor,
 	})
 }
 
@@ -402,6 +405,7 @@ func GetChatTalk(c *gin.Context) {
 		"Nickname":    user.Nickname,
 		"To":          to,
 		"Color":       room.Color,
+		"TextColor":   room.TextColor,
 		"SpeechModes": speechModes,
 	})
 }
