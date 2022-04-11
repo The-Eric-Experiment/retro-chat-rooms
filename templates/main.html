@@ -3,7 +3,7 @@
 <head>
     <title>{{ .Name }} Chat Room</title>
 </head>
-<frameset rows="110,*,110,0" border=0>
+<frameset rows="{{.HeaderHeight}},*,110,0" border=0>
     <frame src="/chat-header/{{ .ID }}" name="header" scrolling=no noresize>
         <frameset cols="80%,*" border=0>
             <frame src="/chat-thread/{{ .ID }}/{{ .UserID }}" name="listen" scrolling=auto noresize>

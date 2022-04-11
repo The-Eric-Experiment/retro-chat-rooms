@@ -1,5 +1,6 @@
 site-name: My Chat!
 chat-room-header-logo: /public/headerimage.gif
+chat-room-header-height: 110
 rooms:
   - id: general
     name: General

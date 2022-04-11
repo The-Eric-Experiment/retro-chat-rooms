@@ -14,8 +14,10 @@ import (
 )
 
 type Config struct {
-	SiteName string  `yaml:site-name`
-	Rooms    []*Room `yaml:"rooms"`
+	SiteName             string  `yaml:"site-name"`
+	ChatRoomHeaderLogo   string  `yaml:"chat-room-header-logo"`
+	ChatRoomHeaderHeight string  `yaml:"chat-room-header-height"`
+	Rooms                []*Room `yaml:"rooms"`
 }
 
 func LoadConfig() Config {

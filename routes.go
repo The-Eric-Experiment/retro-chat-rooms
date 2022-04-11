@@ -167,11 +167,12 @@ func PostRoom(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "main.html", gin.H{
-		"UserID":   user.ID,
-		"Name":     room.Name,
-		"Color":    room.Color,
-		"ID":       room.ID,
-		"Nickname": user.Nickname,
+		"UserID":       user.ID,
+		"Name":         room.Name,
+		"Color":        room.Color,
+		"ID":           room.ID,
+		"Nickname":     user.Nickname,
+		"HeaderHeight": config.ChatRoomHeaderHeight,
 	})
 }
 
@@ -207,6 +208,7 @@ func GetChatHeader(c *gin.Context) {
 		"Name":      room.Name,
 		"Color":     room.Color,
 		"TextColor": room.TextColor,
+		"Logo":      config.ChatRoomHeaderLogo,
 	})
 }
 
