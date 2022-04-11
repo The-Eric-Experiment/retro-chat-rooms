@@ -37,17 +37,22 @@ var speechModes = []SpeechMode{
 	{Value: MODE_WHISPER_TO, Label: "Whisper to"},
 }
 
-var colors = []string{
-	USER_COLOR_BLACK,
-	USER_COLOR_BEIGE,
-	USER_COLOR_BROWN,
-	USER_COLOR_PINK,
-	USER_COLOR_PURPLE,
-	USER_COLOR_NAVY,
-	USER_COLOR_TEAL,
-	USER_COLOR_ORANGE,
-	USER_COLOR_RED,
-	USER_COLOR_BLUE,
+type Color struct {
+	Color string
+	Name  string
+}
+
+var colors = []Color{
+	{Color: USER_COLOR_BLACK, Name: "Black"},
+	{Color: USER_COLOR_BEIGE, Name: "Beige"},
+	{Color: USER_COLOR_BROWN, Name: "Brown"},
+	{Color: USER_COLOR_PINK, Name: "Pink"},
+	{Color: USER_COLOR_PURPLE, Name: "Purple"},
+	{Color: USER_COLOR_NAVY, Name: "Navy"},
+	{Color: USER_COLOR_TEAL, Name: "Teal"},
+	{Color: USER_COLOR_ORANGE, Name: "Orange"},
+	{Color: USER_COLOR_RED, Name: "Red"},
+	{Color: USER_COLOR_BLUE, Name: "Blue"},
 }
 
 func sessionCleanup() {

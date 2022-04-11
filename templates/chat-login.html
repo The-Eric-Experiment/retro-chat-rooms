@@ -54,8 +54,8 @@
                   <td>
                     <b>Nickname color:</b><br /><select name="co" class="select">
                       {{range $i, $c := .Colors}}
-                      <option value="{{ $c }}" style="color: {{ $c }};" {{if eq $i 0}}selected{{end}}>
-                        {{$c}}
+                      <option value="{{ $c.Color }}" style="color: {{ $c.Color }};" {{if eq $i 0}}selected{{end}}>
+                        {{$c.Name}}
                       </option>
                       {{end}}
                     </select>
@@ -73,8 +73,7 @@
           </tr>
           <tr>
             <td>
-              <font size="1" face="arial">Upon Joining the Chat Room, you agree with the&nbsp;<a
-                  href="https://web.archive.org/web/20060321095909/http://tc.batepapo.uol.com.br/regrasuso.jhtm"
+              <font size="1" face="arial">Upon Joining the Chat Room, you agree with the&nbsp;<a href="#"
                   style="color: red"><b>Terms of service</b></a></font>
             </td>
           </tr>
