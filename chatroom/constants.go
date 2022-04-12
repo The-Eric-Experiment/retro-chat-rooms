@@ -8,7 +8,6 @@ const (
 	USER_MAX_MESSAGE_RATE_SEC         = 60
 	USER_MIN_MESSAGE_RATE_SEC         = 2
 	USER_SCREAM_TIMEOUT_MIN   float64 = 2
-	CHILL_OUT_TIMEOUT_MIN     float64 = 2
 	UPDATER_WAIT_TIMEOUT_MS           = 30000
 
 	MODE_SAY_TO     = "says-to"

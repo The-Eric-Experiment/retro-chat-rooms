@@ -42,6 +42,28 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
+	if session.IsIPBanned(user.SessionIdent) {
+		return
+	}
+
+	coolDownMessageSent, found := session.GetSessionValue(user.SessionIdent, "coolDownMessageSent")
+
+	if session.IsCooldownPeriod(user.SessionIdent) && (!found || !coolDownMessageSent.(bool)) {
+		room.SendMessage(&chatroom.RoomMessage{
+			Time:            now,
+			To:              user,
+			From:            user,
+			IsSystemMessage: true,
+			Message:         "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(session.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
+			Privately:       true,
+			SpeechMode:      chatroom.MODE_SAY_TO,
+		})
+		session.SetSessionValue(user.SessionIdent, "coolDownMessageSent", true)
+		return
+	}
+
+	session.SetSessionValue(user.SessionIdent, "coolDownMessageSent", false)
+
 	// Check if there's slurs
 
 	if profanity.HasBlockedWords(message) {
@@ -63,7 +85,7 @@ func PostMessage(c *gin.Context) {
 
 	// Check if user has screamed recently
 
-	lastScream, hasValue := session.GetSessionValue(c, "lastScream")
+	lastScream, hasValue := session.GetSessionValue(user.SessionIdent, "lastScream")
 
 	if hasValue && now.Sub(*lastScream.(*time.Time)).Minutes() <= chatroom.USER_SCREAM_TIMEOUT_MIN && mode == chatroom.MODE_SCREAM_AT {
 		room.SendMessage(&chatroom.RoomMessage{
@@ -83,7 +105,7 @@ func PostMessage(c *gin.Context) {
 	userTo := room.GetUser(to)
 
 	if mode == chatroom.MODE_SCREAM_AT {
-		session.SetSessionValue(c, "lastScream", &now)
+		session.SetSessionValue(user.SessionIdent, "lastScream", &now)
 	}
 
 	room.SendMessage(&chatroom.RoomMessage{

@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/session"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -31,6 +31,23 @@ func GetChatUpdater(c *gin.Context) {
 		return
 	}
 
+	if session.IsIPBanned(user.SessionIdent) {
+		room.SendMessage(&chatroom.RoomMessage{
+			From:            chatroom.OwnerRoomUser,
+			Time:            time.Now().UTC(),
+			Message:         "{nickname} was kicked for flooding the channel too many times.",
+			IsSystemMessage: true,
+			SpeechMode:      chatroom.MODE_SAY_TO,
+		})
+
+		room.DeregisterUser(user)
+		c.HTML(http.StatusOK, "chat-updater.html", gin.H{
+			"UserGone": true,
+			"ID":       room.ID,
+		})
+		return
+	}
+
 	_, hasMessages := lo.Find(
 		room.Messages,
 		func(m *chatroom.RoomMessage) bool { return m.Time.Sub(user.LastPing).Seconds() > 0 },
@@ -41,8 +58,6 @@ func GetChatUpdater(c *gin.Context) {
 	if userListUpdated {
 		user.LastUserListUpdate = time.Now().UTC()
 	}
-
-	fmt.Println(userListUpdated)
 
 	user.LastPing = time.Now().UTC()
 

@@ -1,7 +1,6 @@
 package chatroom
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -31,31 +30,24 @@ func (cea *ChatEventAwaiter) Dispatch() {
 
 func (cea *ChatEventAwaiter) Await(ctx *gin.Context, cb func(ctx *gin.Context)) {
 	reqId := uuid.New().String()
-	fmt.Println("request received")
 	cea.mu.Lock()
 
 	ch := make(chan string)
 	cea.currentlyWaiting[reqId] = ch
-	fmt.Println(len(cea.currentlyWaiting))
 
 	cea.mu.Unlock()
 
 	go func(context *gin.Context) {
 		defer close(ch)
-		var wat string
 		select {
 		case <-ch:
-			wat = "received"
 			break
 		case <-time.After(UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
-			wat = "timedout"
 			cea.mu.Lock()
 			delete(cea.currentlyWaiting, reqId)
 			cea.mu.Unlock()
 			break
 		}
-
-		fmt.Println(wat)
 
 		cb(context)
 	}(ctx.Copy())

@@ -32,11 +32,10 @@ func GetSessionUserIdent(ctx *gin.Context) string {
 	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(ip+uagent)).String()
 }
 
-func GetSessionValue(c *gin.Context, key string) (interface{}, bool) {
+func GetSessionValue(sessionIdent string, key string) (interface{}, bool) {
 	defer mu.Unlock()
 	mu.Lock()
-	userIdent := GetSessionUserIdent(c)
-	session := sessions[userIdent]
+	session := sessions[sessionIdent]
 
 	if session[key] == nil {
 		return nil, false
@@ -45,15 +44,14 @@ func GetSessionValue(c *gin.Context, key string) (interface{}, bool) {
 	return session[key], true
 }
 
-func SetSessionValue(c *gin.Context, key string, value interface{}) {
+func SetSessionValue(sessionIdent string, key string, value interface{}) {
 	defer mu.Unlock()
 	mu.Lock()
-	userIdent := GetSessionUserIdent(c)
-	if sessions[userIdent] == nil {
-		sessions[userIdent] = UserSession{}
+	if sessions[sessionIdent] == nil {
+		sessions[sessionIdent] = UserSession{}
 	}
 
-	sessions[userIdent][key] = value
+	sessions[sessionIdent][key] = value
 }
 
 func DeregisterSession(userIdent string) {
@@ -66,4 +64,12 @@ func GetSessionIds() []string {
 	defer mu.Unlock()
 	mu.Lock()
 	return lo.Keys(sessions)
+}
+
+func RegisterUserIP(c *gin.Context) string {
+	ip := getIP(c)
+	registerIp(ip)
+	sessionIdent := GetSessionUserIdent(c)
+	SetSessionValue(sessionIdent, "ip", ip)
+	return ip
 }

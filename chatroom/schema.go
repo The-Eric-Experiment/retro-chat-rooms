@@ -1,6 +1,8 @@
 package chatroom
 
-import "time"
+import (
+	"time"
+)
 
 type PubSubPostMessage struct {
 	Room    *Room

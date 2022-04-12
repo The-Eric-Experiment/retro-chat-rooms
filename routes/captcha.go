@@ -25,7 +25,8 @@ func GetChaptcha(ctx *gin.Context) {
 		return
 	}
 
-	session.SetSessionValue(ctx, "captcha", data.Text)
+	userSessionIdent := session.GetSessionUserIdent(ctx)
+	session.SetSessionValue(userSessionIdent, "captcha", data.Text)
 
 	data.WriteGIF(ctx.Writer, &gif.Options{
 		NumColors: 256,

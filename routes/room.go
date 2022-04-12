@@ -36,7 +36,6 @@ func PostRoom(c *gin.Context) {
 	nickname := c.PostForm("ni")
 	color := c.PostForm("co")
 	captcha := c.PostForm("chap")
-	sessionCaptcha, foundCaptcha := session.GetSessionValue(c, "captcha")
 
 	room := chatroom.FindRoomByID(id)
 
@@ -46,11 +45,14 @@ func PostRoom(c *gin.Context) {
 	}
 
 	userIdent := session.GetSessionUserIdent(c)
-	user, err := room.RegisterUser(nickname, color, userIdent)
+	session.RegisterUserIP(c)
+
+	sessionCaptcha, foundCaptcha := session.GetSessionValue(userIdent, "captcha")
+
 	errors := make([]string, 0)
 
-	if err != nil {
-		errors = append(errors, "Couldn't register user, try again.")
+	if session.IsIPBanned(userIdent) {
+		errors = append(errors, "You have been temporarily kicked out for flooding, try again later.")
 	}
 
 	if nickname == "" {
@@ -63,6 +65,17 @@ func PostRoom(c *gin.Context) {
 
 	if !foundCaptcha || sessionCaptcha.(string) != captcha {
 		errors = append(errors, "The entered captcha is invalid.")
+	}
+
+	var user *chatroom.RoomUser
+	if len(errors) == 0 {
+		var err error
+		user, err = room.RegisterUser(nickname, color, userIdent)
+		if err != nil && err.Error() == "user exists" {
+			errors = append(errors, "Someone is already using this Nickname, try a different one.")
+		} else if err != nil {
+			errors = append(errors, "Couldn't register user, try again.")
+		}
 	}
 
 	if len(errors) > 0 {

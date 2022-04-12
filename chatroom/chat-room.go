@@ -2,9 +2,9 @@ package chatroom
 
 import (
 	"errors"
-	"fmt"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/pubsub"
+	"retro-chat-rooms/session"
 	"strings"
 	"sync"
 	"time"
@@ -37,8 +37,6 @@ func determineTextColor(color string) string {
 	}
 
 	_, _, luminance := c.HSLuv()
-
-	fmt.Println(luminance)
 
 	if (luminance * 100) > 60 {
 		return "#000000"
@@ -115,16 +113,17 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 		LastPing:           now,
 		LastUserListUpdate: now,
 		SessionIdent:       discordUser.ID,
+		IsOwner:            false,
+		IsDiscordUser:      true,
 	}
 
 	room.mutex.Lock()
-	room.Users = append(room.Users, user)
+	room.DiscordUsers = append(room.DiscordUsers, user)
 	room.mutex.Unlock()
 
 	room.Update()
 
 	return user
-
 }
 
 func (room *Room) DeregisterUser(user *RoomUser) {
@@ -168,10 +167,13 @@ func (room *Room) SendMessage(message *RoomMessage) {
 		Message: message,
 	})
 
+	if checkForMessageAbuse(room, message.From) {
+		session.SetFlooded(message.From.SessionIdent)
+	}
+
 	if len(room.Messages) > MAX_MESSAGES {
 		room.Messages = room.Messages[0:MAX_MESSAGES]
 	}
-
 }
 
 func (room *Room) GetUser(userId string) *RoomUser {
@@ -242,4 +244,32 @@ func FromConfig() []*Room {
 		room.Initialize()
 		return room
 	})
+}
+
+func checkForMessageAbuse(room *Room, user *RoomUser) bool {
+	if user.IsDiscordUser || user.IsOwner {
+		return false
+	}
+
+	messages := lo.Filter(room.Messages, func(message *RoomMessage, _ int) bool { return message.From.ID == user.ID })
+
+	if len(messages) < session.MESSAGE_FLOOD_MESSAGES_COUNT {
+		return false
+	}
+
+	firstMessage, err := lo.Last(messages[0:session.MESSAGE_FLOOD_MESSAGES_COUNT])
+	if err != nil {
+		return false
+	}
+
+	messages = messages[0 : session.MESSAGE_FLOOD_MESSAGES_COUNT-1]
+
+	for _, msg := range messages {
+		seconds := msg.Time.Sub(firstMessage.Time).Seconds()
+		if seconds > session.MESSAGE_FLOOD_RANGE_SEC {
+			return false
+		}
+	}
+
+	return true
 }
