@@ -1,8 +1,10 @@
-package main
+package chatroom
 
 import (
 	"errors"
 	"fmt"
+	"retro-chat-rooms/config"
+	"retro-chat-rooms/pubsub"
 	"strings"
 	"sync"
 	"time"
@@ -13,54 +15,18 @@ import (
 	"github.com/samber/lo"
 )
 
-const MAX_MESSAGES = 200
-const USER_LOGOUT_TIMEOUT = 120
-const USER_MAX_MESSAGE_RATE_SEC = 60
-const USER_MIN_MESSAGE_RATE_SEC = 2
-const USER_SCREAM_TIMEOUT_MIN float64 = 2
-const CHILL_OUT_TIMEOUT_MIN float64 = 2
-const UPDATER_WAIT_TIMEOUT_MS = 30000
-
-type SpeechMode struct {
-	Value string
-	Label string
-}
-
-type RoomMessage struct {
-	Time            time.Time
-	Message         string
-	From            *RoomUser
-	To              *RoomUser
-	Privately       bool
-	SpeechMode      string
-	IsSystemMessage bool
-	FromDiscord     bool
-}
-
-type RoomUser struct {
-	ID                 string
-	LastActivity       time.Time
-	Nickname           string
-	Color              string
-	LastPing           time.Time
-	LastUserListUpdate time.Time
-	SessionIdent       string
-	IsDiscordUser      bool
-	IsOwner            bool
-}
-
 type Room struct {
-	ID                 string `yaml:"id"`
-	Name               string `yaml:"name"`
-	Description        string `yaml:"description"`
-	Color              string `yaml:"color"`
-	DiscordChannel     string `yaml:"discord-channel"`
+	ID                 string
+	Name               string
+	Description        string
+	Color              string
+	DiscordChannel     string
 	Messages           []*RoomMessage
 	Users              []*RoomUser
 	DiscordUsers       []*RoomUser
 	LastUserListUpdate time.Time
 	mutex              sync.Mutex
-	chatEventAwaiter   ChatEventAwaiter
+	ChatEventAwaiter   ChatEventAwaiter
 	TextColor          string
 }
 
@@ -83,7 +49,7 @@ func determineTextColor(color string) string {
 
 func (room *Room) Initialize() {
 	room.TextColor = determineTextColor(room.Color)
-	fmt.Println(room.Name, room.TextColor)
+	room.ChatEventAwaiter.Initialize()
 }
 
 func (room *Room) RegisterUser(nickname string, color string, sessionIdent string) (*RoomUser, error) {
@@ -119,7 +85,7 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 		Message:         "{nickname} has joined the room!",
 		IsSystemMessage: true,
 		Privately:       false,
-		SpeechMode:      speechModes[0].Value,
+		SpeechMode:      SPEECH_MODES[0].Value,
 		From:            user,
 	})
 
@@ -173,7 +139,7 @@ func (room *Room) DeregisterUser(user *RoomUser) {
 		Message:         "{nickname} has left the room!",
 		IsSystemMessage: true,
 		Privately:       false,
-		SpeechMode:      speechModes[0].Value,
+		SpeechMode:      SPEECH_MODES[0].Value,
 		From:            user,
 	})
 
@@ -197,20 +163,22 @@ func (room *Room) SendMessage(message *RoomMessage) {
 	room.mutex.Lock()
 	room.Messages = append([]*RoomMessage{message}, room.Messages...)
 
-	if !message.FromDiscord {
-		discord.SendMessage(room.DiscordChannel, message)
-	}
+	pubsub.Messaging.Publish(&PubSubPostMessage{
+		Room:    room,
+		Message: message,
+	})
 
 	if len(room.Messages) > MAX_MESSAGES {
 		room.Messages = room.Messages[0:MAX_MESSAGES]
 	}
+
 }
 
 func (room *Room) GetUser(userId string) *RoomUser {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
-	if ownerRoomUser != nil && (userId == ownerRoomUser.ID || userId == config.OwnerChatUser.DiscordId) {
-		return ownerRoomUser
+	if OwnerRoomUser != nil && (userId == OwnerRoomUser.ID || userId == config.Current.OwnerChatUser.DiscordId) {
+		return OwnerRoomUser
 	}
 
 	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return r.ID == userId })
@@ -232,8 +200,8 @@ func (room *Room) GetUserByNickname(nickname string) *RoomUser {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
 
-	if cleanNickname == strings.TrimSpace(strings.ToLower(ownerRoomUser.Nickname)) {
-		return ownerRoomUser
+	if cleanNickname == strings.TrimSpace(strings.ToLower(OwnerRoomUser.Nickname)) {
+		return OwnerRoomUser
 	}
 
 	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return strings.TrimSpace(strings.ToLower(r.Nickname)) == cleanNickname })
@@ -251,5 +219,27 @@ func (room *Room) GetUserByNickname(nickname string) *RoomUser {
 }
 
 func (room *Room) Update() {
-	room.chatEventAwaiter.Dispatch()
+	room.ChatEventAwaiter.Dispatch()
+}
+
+func FromConfig() []*Room {
+	return lo.Map(config.Current.Rooms, func(cr config.ConfigChatRoom, _ int) *Room {
+		room := &Room{
+			mutex:              sync.Mutex{},
+			ChatEventAwaiter:   ChatEventAwaiter{},
+			ID:                 cr.ID,
+			Name:               cr.Name,
+			Description:        cr.Description,
+			Color:              cr.Color,
+			DiscordChannel:     cr.DiscordChannel,
+			Messages:           make([]*RoomMessage, 0),
+			Users:              make([]*RoomUser, 0),
+			DiscordUsers:       make([]*RoomUser, 0),
+			LastUserListUpdate: time.Now().UTC(),
+			TextColor:          determineTextColor(cr.Color),
+		}
+
+		room.Initialize()
+		return room
+	})
 }

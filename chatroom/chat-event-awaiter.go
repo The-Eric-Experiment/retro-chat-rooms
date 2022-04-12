@@ -1,4 +1,4 @@
-package main
+package chatroom
 
 import (
 	"fmt"
@@ -59,5 +59,4 @@ func (cea *ChatEventAwaiter) Await(ctx *gin.Context, cb func(ctx *gin.Context)) 
 
 		cb(context)
 	}(ctx.Copy())
-
 }

@@ -1,4 +1,4 @@
-package main
+package profanity
 
 import (
 	"bufio"

@@ -1,12 +1,13 @@
-package main
+package templates
 
 import (
 	"html/template"
+	chatroom "retro-chat-rooms/chatroom"
 	"strings"
 	"time"
 )
 
-func formatMessage(msg *RoomMessage) template.HTML {
+func formatMessage(msg *chatroom.RoomMessage) template.HTML {
 	if !msg.IsSystemMessage {
 		return template.HTML(template.HTMLEscapeString(msg.Message))
 	}
@@ -14,7 +15,7 @@ func formatMessage(msg *RoomMessage) template.HTML {
 	return template.HTML(transformed)
 }
 
-func formatNickname(user *RoomUser) template.HTML {
+func formatNickname(user *chatroom.RoomUser) template.HTML {
 	if user == nil {
 		return template.HTML("<strong>Everyone</strong>")
 	}
@@ -22,7 +23,7 @@ func formatNickname(user *RoomUser) template.HTML {
 	return template.HTML("<strong><font color=\"" + user.Color + "\">" + user.Nickname + "</font></strong>")
 }
 
-func isUserNotNil(input *RoomUser) bool {
+func isUserNotNil(input *chatroom.RoomUser) bool {
 	return input != nil
 }
 
@@ -30,7 +31,7 @@ func formatTime(t time.Time) string {
 	return t.Format("03:04:05 PM")
 }
 
-func isMessageVisible(userId string, message *RoomMessage) bool {
+func isMessageVisible(userId string, message *chatroom.RoomMessage) bool {
 	if !message.Privately || message.To == nil {
 		return true
 	}
@@ -38,7 +39,7 @@ func isMessageVisible(userId string, message *RoomMessage) bool {
 	return userId == message.To.ID || userId == message.From.ID
 }
 
-func isMessageToSelf(userId string, message *RoomMessage) bool {
+func isMessageToSelf(userId string, message *chatroom.RoomMessage) bool {
 	if message.To == nil {
 		return false
 	}
@@ -46,7 +47,7 @@ func isMessageToSelf(userId string, message *RoomMessage) bool {
 	return userId == message.To.ID
 }
 
-func countUsers(input []*RoomUser) int {
+func countUsers(input []*chatroom.RoomUser) int {
 	return len(input)
 }
 
