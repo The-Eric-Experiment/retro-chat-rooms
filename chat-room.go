@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/samber/lo"
@@ -33,6 +34,7 @@ type RoomMessage struct {
 	Privately       bool
 	SpeechMode      string
 	IsSystemMessage bool
+	FromDiscord     bool
 }
 
 type RoomUser struct {
@@ -43,6 +45,8 @@ type RoomUser struct {
 	LastPing           time.Time
 	LastUserListUpdate time.Time
 	SessionIdent       string
+	IsDiscordUser      bool
+	IsOwner            bool
 }
 
 type Room struct {
@@ -50,8 +54,10 @@ type Room struct {
 	Name               string `yaml:"name"`
 	Description        string `yaml:"description"`
 	Color              string `yaml:"color"`
+	DiscordChannel     string `yaml:"discord-channel"`
 	Messages           []*RoomMessage
 	Users              []*RoomUser
+	DiscordUsers       []*RoomUser
 	LastUserListUpdate time.Time
 	mutex              sync.Mutex
 	chatEventAwaiter   ChatEventAwaiter
@@ -84,15 +90,15 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 	now := time.Now().UTC()
 	inputNickname := strings.ToLower(strings.TrimSpace(nickname))
 
+	userId := uuid.NewSHA1(uuid.NameSpaceURL, []byte(inputNickname)).String()
+
 	room.mutex.Lock()
-	_, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.Nickname == inputNickname })
+	_, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.ID == userId })
 	room.mutex.Unlock()
 
 	if found {
 		return nil, errors.New("user exists")
 	}
-
-	userId := uuid.NewSHA1(uuid.NameSpaceURL, []byte(inputNickname)).String()
 
 	user := &RoomUser{
 		ID:                 userId,
@@ -124,6 +130,37 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 	return user, nil
 }
 
+func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
+	now := time.Now().UTC()
+
+	room.mutex.Lock()
+	foundUser, found := lo.Find(room.DiscordUsers, func(user *RoomUser) bool { return user.ID == discordUser.ID })
+	room.mutex.Unlock()
+
+	if found {
+		return foundUser
+	}
+
+	user := &RoomUser{
+		ID:                 discordUser.ID,
+		LastActivity:       now,
+		Nickname:           discordUser.Username,
+		Color:              USER_COLOR_BLACK,
+		LastPing:           now,
+		LastUserListUpdate: now,
+		SessionIdent:       discordUser.ID,
+	}
+
+	room.mutex.Lock()
+	room.Users = append(room.Users, user)
+	room.mutex.Unlock()
+
+	room.Update()
+
+	return user
+
+}
+
 func (room *Room) DeregisterUser(user *RoomUser) {
 	room.mutex.Lock()
 	room.Users = lo.Filter(room.Users, func(u *RoomUser, _ int) bool {
@@ -145,19 +182,72 @@ func (room *Room) DeregisterUser(user *RoomUser) {
 	room.Update()
 }
 
+func (room *Room) DeregisterDiscordUser(user *RoomUser) {
+	room.mutex.Lock()
+	room.Users = lo.Filter(room.DiscordUsers, func(u *RoomUser, _ int) bool {
+		return u.ID != user.ID
+	})
+	room.mutex.Unlock()
+
+	room.Update()
+}
+
 func (room *Room) SendMessage(message *RoomMessage) {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
 	room.Messages = append([]*RoomMessage{message}, room.Messages...)
+
+	if !message.FromDiscord {
+		discord.SendMessage(room.DiscordChannel, message)
+	}
+
 	if len(room.Messages) > MAX_MESSAGES {
 		room.Messages = room.Messages[0:MAX_MESSAGES]
 	}
 }
 
-func (room *Room) GetUser(userId string) (*RoomUser, bool) {
+func (room *Room) GetUser(userId string) *RoomUser {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
-	return lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
+	if ownerRoomUser != nil && (userId == ownerRoomUser.ID || userId == config.OwnerChatUser.DiscordId) {
+		return ownerRoomUser
+	}
+
+	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return r.ID == userId })
+
+	if found {
+		return discordUser
+	}
+
+	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
+	if found {
+		return roomUser
+	}
+
+	return nil
+}
+
+func (room *Room) GetUserByNickname(nickname string) *RoomUser {
+	cleanNickname := strings.TrimSpace(strings.ToLower(nickname))
+	defer room.mutex.Unlock()
+	room.mutex.Lock()
+
+	if cleanNickname == strings.TrimSpace(strings.ToLower(ownerRoomUser.Nickname)) {
+		return ownerRoomUser
+	}
+
+	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return strings.TrimSpace(strings.ToLower(r.Nickname)) == cleanNickname })
+
+	if found {
+		return discordUser
+	}
+
+	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return strings.TrimSpace(strings.ToLower(r.Nickname)) == cleanNickname })
+	if found {
+		return roomUser
+	}
+
+	return nil
 }
 
 func (room *Room) Update() {

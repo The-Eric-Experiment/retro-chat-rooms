@@ -1,23 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"gopkg.in/yaml.v2"
 )
 
+type OwnerChatUserConfig struct {
+	DiscordId string `yaml:"discord_id"`
+	Id        string `yaml:"id"`
+	Nickname  string `yaml:"nickname"`
+	Color     string `yaml:"color"`
+	Password  string `yaml:"password"`
+}
+
 type Config struct {
-	SiteName             string  `yaml:"site-name"`
-	ChatRoomHeaderLogo   string  `yaml:"chat-room-header-logo"`
-	ChatRoomHeaderHeight string  `yaml:"chat-room-header-height"`
-	Rooms                []*Room `yaml:"rooms"`
+	SiteName             string              `yaml:"site-name"`
+	ChatRoomHeaderLogo   string              `yaml:"chat-room-header-logo"`
+	ChatRoomHeaderHeight string              `yaml:"chat-room-header-height"`
+	DiscordBotToken      string              `yaml:"discord-bot-token"`
+	OwnerChatUser        OwnerChatUserConfig `yaml:"owner-chat-user"`
+	Rooms                []*Room             `yaml:"rooms"`
 }
 
 func LoadConfig() Config {
@@ -37,6 +51,28 @@ func LoadConfig() Config {
 var session = Session{}
 
 var config = LoadConfig()
+
+var ownerRoomUser *RoomUser
+
+func initializeOnwner(config OwnerChatUserConfig) {
+	if config.DiscordId == "" {
+		return
+	}
+
+	ownerRoomUser = &RoomUser{
+		ID:                 config.Id,
+		LastActivity:       time.Now().UTC(),
+		Nickname:           config.Nickname,
+		Color:              config.Color,
+		LastPing:           time.Now().UTC(),
+		LastUserListUpdate: time.Now().UTC(),
+		SessionIdent:       "",
+		IsDiscordUser:      config.DiscordId != "",
+		IsOwner:            true,
+	}
+}
+
+var discord = DiscordBot{}
 
 var rooms = config.Rooms
 
@@ -120,9 +156,53 @@ func LoadTemplates(router *gin.Engine) {
 	router.SetHTMLTemplate(t)
 }
 
+func onDiscordConnected(user *discordgo.User) {
+	fmt.Println(user)
+}
+
+func receiveDiscordMessage(m *discordgo.MessageCreate) {
+	content := m.Content
+
+	room, found := lo.Find(rooms, func(room *Room) bool { return room.DiscordChannel == m.ChannelID })
+
+	if !found {
+		return
+	}
+
+	user := room.GetUser(m.Author.ID)
+	if user == nil {
+		user = room.RegisterDiscordUser(m.Author)
+	}
+	now := time.Now().UTC()
+
+	messageMentionExpr := regexp.MustCompile(`^\s*@([^:]+):\s*(.+)`)
+
+	match := messageMentionExpr.FindStringSubmatch(m.Content)
+
+	var to *RoomUser
+
+	if len(match) > 1 {
+		content = match[2]
+		to = room.GetUserByNickname(match[1])
+	}
+
+	room.SendMessage(&RoomMessage{
+		Time:            now,
+		Message:         content,
+		From:            user,
+		SpeechMode:      MODE_SAY_TO,
+		To:              to,
+		IsSystemMessage: false,
+		FromDiscord:     true,
+	})
+
+	room.Update()
+}
+
 func main() {
 	LoadProfanityFilters()
 	session.Initialize()
+	initializeOnwner(config.OwnerChatUser)
 
 	for _, room := range rooms {
 		room.Initialize()
@@ -157,5 +237,21 @@ func main() {
 		room.chatEventAwaiter.Initialize()
 	}
 
+	discord.Connect(onDiscordConnected)
+	discord.OnReceiveMessage(receiveDiscordMessage)
+
+	// go func() {
+	// 	fmt.Println("Server is now running.  Press CTRL-C to exit.")
+	// 	sc := make(chan os.Signal, 1)
+	// 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+
+	// 	<-sc
+
+	// 	fmt.Println("Disconnecting from Discord")
+	// 	discord.Close()
+	// }()
+
 	router.Run()
+	fmt.Println("closing...")
+	discord.Close()
 }

@@ -25,6 +25,17 @@
         </a>
       </td>
     </tr>
+    {{if (isUserNotNil .ChatOwner)}}
+    <tr>
+      <td bgcolor="#EEEEEE">
+        <a href="/chat-talk/{{.ID}}/{{.UserID}}?to={{.ChatOwner.ID}}" target="talk">
+          <font color="{{.ChatOwner.Color}}">
+            <strong>@{{.ChatOwner.Nickname}}</strong>
+          </font>
+        </a>
+      </td>
+    </tr>
+    {{end}}
     <tr>
       {{$userID := .UserID}}
       {{$roomID := .ID}}

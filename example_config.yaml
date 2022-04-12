@@ -1,12 +1,21 @@
 site-name: My Chat!
 chat-room-header-logo: /public/headerimage.gif
 chat-room-header-height: 110
+# discord-bot-token: 
+owner-chat-user:
+  #discord_id:
+  id: 
+  name: 
+  color: 
+  password: 
 rooms:
   - id: general
     name: General
     description: General chit-chat about any subject
     color: "#CDCFC3"
+    discord-channel:
   - id: other-room
     name: Other Room
     description: Describe the other room
     color: "#95C6FA"
+    discord-channel:

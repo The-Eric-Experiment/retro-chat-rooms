@@ -253,9 +253,9 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
-	user, ok := room.GetUser(userId)
+	user := room.GetUser(userId)
 
-	if !ok {
+	if user == nil {
 		c.Status(http.StatusNotFound)
 		return
 	}
@@ -298,7 +298,7 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
-	userTo, _ := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == to })
+	userTo := room.GetUser(to)
 
 	if mode == MODE_SCREAM_AT {
 		session.SetSessionValue(c, "lastScream", &now)
@@ -391,20 +391,14 @@ func GetChatTalk(c *gin.Context) {
 		return
 	}
 
-	user, ok := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
+	user := room.GetUser(userId)
 
-	if !ok {
+	if user == nil {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	var to *RoomUser = nil
-
-	toUser, ok := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == toUserId })
-
-	if ok {
-		to = toUser
-	}
+	to := room.GetUser(toUserId)
 
 	c.HTML(http.StatusOK, "chat-talk.html", gin.H{
 		"ID":          room.ID,
@@ -441,6 +435,7 @@ func GetChatUsers(c *gin.Context) {
 		"Users":       room.Users,
 		"UsersOnline": len(room.Users),
 		"RoomTime":    time.Now().UTC(),
+		"ChatOwner":   ownerRoomUser,
 	})
 }
 
@@ -477,9 +472,9 @@ func PostLogout(c *gin.Context) {
 		return
 	}
 
-	user, ok := room.GetUser(userId)
+	user := room.GetUser(userId)
 
-	if !ok {
+	if user == nil {
 		c.Status(http.StatusNotFound)
 		return
 	}
