@@ -29,18 +29,21 @@ func main() {
 
 	templates.LoadTemplates(router)
 
+	// Chat login
 	router.GET("/", routes.GetIndex)
+	router.GET("/join/:id", routes.GetJoin)
+	router.POST("/join/:id", routes.PostJoin)
+	router.GET("/chaptcha", routes.GetChaptcha)
+	router.POST("/logout", routes.PostLogout)
+
+	// Main chat Screen
 	router.GET("/room/:id", routes.GetRoom)
-	router.POST("/room/:id", routes.PostRoom)
-	router.GET("chat-login/:id", routes.GetChatLogin)
 	router.GET("/chat-header/:id", routes.GetChatHeader)
 	router.GET("/chat-thread/:id/:userId", routes.GetChatThread)
 	router.POST("/post-message", routes.PostMessage)
 	router.GET("/chat-updater/:id/:userId", routes.GetChatUpdater)
 	router.GET("/chat-talk/:id/:userId", routes.GetChatTalk)
 	router.GET("/chat-users/:id/:userId", routes.GetChatUsers)
-	router.GET("/chaptcha", routes.GetChaptcha)
-	router.POST("/logout", routes.PostLogout)
 
 	discord.Instance.Connect()
 	discord.Instance.OnReceiveMessage(routes.ReceiveDiscordMessage)

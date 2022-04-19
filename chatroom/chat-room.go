@@ -220,6 +220,28 @@ func (room *Room) GetUserByNickname(nickname string) *RoomUser {
 	return nil
 }
 
+func (room *Room) GetUserBySessionIdent(sessionIdent string) *RoomUser {
+	defer room.mutex.Unlock()
+	room.mutex.Lock()
+
+	if sessionIdent == OwnerRoomUser.SessionIdent {
+		return OwnerRoomUser
+	}
+
+	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return r.SessionIdent == sessionIdent })
+
+	if found {
+		return discordUser
+	}
+
+	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return r.SessionIdent == sessionIdent })
+	if found {
+		return roomUser
+	}
+
+	return nil
+}
+
 func (room *Room) Update() {
 	room.ChatEventAwaiter.Dispatch()
 }
