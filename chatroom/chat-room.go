@@ -127,7 +127,7 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 }
 
 func (room *Room) DeregisterUser(user *RoomUser) {
-	if user.ID == OwnerRoomUser.ID {
+	if OwnerRoomUser != nil && user.ID == OwnerRoomUser.ID {
 		LogoutOwner()
 		return
 	}
@@ -207,7 +207,7 @@ func (room *Room) GetUserByNickname(nickname string) *RoomUser {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
 
-	if cleanNickname == strings.TrimSpace(strings.ToLower(OwnerRoomUser.Nickname)) {
+	if OwnerRoomUser != nil && cleanNickname == strings.TrimSpace(strings.ToLower(OwnerRoomUser.Nickname)) {
 		return OwnerRoomUser
 	}
 
@@ -229,7 +229,7 @@ func (room *Room) GetUserBySessionIdent(sessionIdent string) *RoomUser {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
 
-	if sessionIdent == OwnerRoomUser.SessionIdent {
+	if OwnerRoomUser != nil && sessionIdent == OwnerRoomUser.SessionIdent {
 		return OwnerRoomUser
 	}
 
