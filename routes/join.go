@@ -105,7 +105,7 @@ func PostJoin(c *gin.Context) {
 			ownerPassword := strings.ToLower(config.Current.OwnerChatUser.Password)
 
 			if hash == ownerPassword && isOwnerVariation {
-				chatroom.LoginOwner(userIdent)
+				chatroom.LoginOwner(config.Current.OwnerChatUser, userIdent)
 			} else {
 				errors = append(errors, "Entered credentials are invalid!")
 			}

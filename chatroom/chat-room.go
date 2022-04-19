@@ -128,7 +128,7 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 
 func (room *Room) DeregisterUser(user *RoomUser) {
 	if user.ID == OwnerRoomUser.ID {
-		user.SessionIdent = ""
+		LogoutOwner()
 		return
 	}
 
