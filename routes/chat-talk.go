@@ -3,13 +3,13 @@ package routes
 import (
 	"net/http"
 	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/session"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetChatTalk(c *gin.Context) {
 	id := c.Param("id")
-	userId := c.Param("userId")
 	toUserId := c.Query("to")
 
 	room := chatroom.FindRoomByID(id)
@@ -19,7 +19,8 @@ func GetChatTalk(c *gin.Context) {
 		return
 	}
 
-	user := room.GetUser(userId)
+	ident := session.GetSessionUserIdent(c)
+	user := room.GetUserBySessionIdent(ident)
 
 	if user == nil {
 		c.Status(http.StatusNotFound)

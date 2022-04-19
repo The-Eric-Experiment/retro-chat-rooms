@@ -18,7 +18,7 @@
     </tr>
     <tr>
       <td bgcolor="#EEEEEE">
-        <a href="/chat-talk/{{.ID}}/{{.UserID}}" target="talk">
+        <a href="/chat-talk/{{.ID}}" target="talk">
           <font color="#000000">
             <strong>Everyone</strong>
           </font>
@@ -28,7 +28,7 @@
     {{if (isUserNotNil .ChatOwner)}}
     <tr>
       <td bgcolor="#EEEEEE">
-        <a href="/chat-talk/{{.ID}}/{{.UserID}}?to={{.ChatOwner.ID}}" target="talk">
+        <a href="/chat-talk/{{.ID}}?to={{.ChatOwner.ID}}" target="talk">
           <font color="{{.ChatOwner.Color}}">
             <strong>@{{.ChatOwner.Nickname}}</strong>
           </font>
@@ -44,7 +44,7 @@
         {{if eq $u.ID $userID}}
         {{$u | formatNickname}} <font size="-2">(Me)</font>
         {{else}}
-        <a href="/chat-talk/{{$roomID}}/{{$userID}}?to={{$u.ID}}" target="talk">
+        <a href="/chat-talk/{{$roomID}}?to={{$u.ID}}" target="talk">
           {{$u | formatNickname}}
         </a>
         {{end}}
@@ -63,8 +63,8 @@
     </td>
   </tr>
   <center>
-    <font size="-1"><a target="userlist"
-        href="/chat-users/{{ .ID }}/{{.UserID}}">[&nbsp;Update&nbsp;Who's&nbsp;Online&nbsp;]</a></font>
+    <font size="-1"><a target="userlist" href="/chat-users/{{ .ID }}">[&nbsp;Update&nbsp;Who's&nbsp;Online&nbsp;]</a>
+    </font>
   </center>
 
   </html>

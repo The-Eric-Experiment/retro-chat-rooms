@@ -127,6 +127,11 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 }
 
 func (room *Room) DeregisterUser(user *RoomUser) {
+	if user.ID == OwnerRoomUser.ID {
+		user.SessionIdent = ""
+		return
+	}
+
 	room.mutex.Lock()
 	room.Users = lo.Filter(room.Users, func(u *RoomUser, _ int) bool {
 		return u.ID != user.ID

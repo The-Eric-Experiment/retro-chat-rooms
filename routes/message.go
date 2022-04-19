@@ -17,14 +17,13 @@ import (
 func PostMessage(c *gin.Context) {
 	id := c.PostForm("id")
 	message := c.PostForm("message")
-	userId := c.PostForm("userId")
 	to := c.PostForm("to")
 	mode := c.PostForm("speechMode")
 	private := c.PostForm("private")
 	now := time.Now().UTC()
 
 	if len(strings.TrimSpace(message)) == 0 {
-		c.Redirect(302, "/chat-updater/"+id+"/"+userId)
+		c.Redirect(http.StatusFound, "/chat-updater/"+id)
 		return
 	}
 
@@ -35,7 +34,8 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
-	user := room.GetUser(userId)
+	ident := session.GetSessionUserIdent(c)
+	user := room.GetUserBySessionIdent(ident)
 
 	if user == nil {
 		c.Status(http.StatusNotFound)
@@ -77,7 +77,7 @@ func PostMessage(c *gin.Context) {
 			SpeechMode:      chatroom.MODE_SAY_TO,
 		})
 
-		c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
+		c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
 		return
 	}
 
@@ -98,7 +98,7 @@ func PostMessage(c *gin.Context) {
 			SpeechMode:      chatroom.MODE_SAY_TO,
 		})
 
-		c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
+		c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
 		return
 	}
 
@@ -120,7 +120,7 @@ func PostMessage(c *gin.Context) {
 
 	room.Update()
 
-	c.Redirect(302, "/chat-updater/"+room.ID+"/"+user.ID)
+	c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
 }
 
 func ReceiveDiscordMessage(m *discordgo.MessageCreate) {

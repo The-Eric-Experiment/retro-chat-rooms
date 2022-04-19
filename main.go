@@ -39,11 +39,11 @@ func main() {
 	// Main chat Screen
 	router.GET("/room/:id", routes.GetRoom)
 	router.GET("/chat-header/:id", routes.GetChatHeader)
-	router.GET("/chat-thread/:id/:userId", routes.GetChatThread)
+	router.GET("/chat-thread/:id", routes.GetChatThread)
+	router.GET("/chat-updater/:id", routes.GetChatUpdater)
+	router.GET("/chat-talk/:id", routes.GetChatTalk)
+	router.GET("/chat-users/:id", routes.GetChatUsers)
 	router.POST("/post-message", routes.PostMessage)
-	router.GET("/chat-updater/:id/:userId", routes.GetChatUpdater)
-	router.GET("/chat-talk/:id/:userId", routes.GetChatTalk)
-	router.GET("/chat-users/:id/:userId", routes.GetChatUsers)
 
 	discord.Instance.Connect()
 	discord.Instance.OnReceiveMessage(routes.ReceiveDiscordMessage)

@@ -28,11 +28,9 @@ func GetRoom(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusFound, "main.html", gin.H{
-		"UserID":       user.ID,
 		"Name":         room.Name,
 		"Color":        room.Color,
 		"ID":           room.ID,
-		"Nickname":     user.Nickname,
 		"HeaderHeight": config.Current.ChatRoomHeaderHeight,
 	})
 }

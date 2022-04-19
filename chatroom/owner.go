@@ -8,10 +8,6 @@ import (
 var OwnerRoomUser *RoomUser
 
 func InitializeOwner(config config.OwnerChatUserConfig) {
-	if config.DiscordId == "" {
-		return
-	}
-
 	OwnerRoomUser = &RoomUser{
 		ID:                 config.Id,
 		LastActivity:       time.Now().UTC(),
@@ -23,4 +19,8 @@ func InitializeOwner(config config.OwnerChatUserConfig) {
 		IsDiscordUser:      config.DiscordId != "",
 		IsOwner:            true,
 	}
+}
+
+func LoginOwner(ident string) {
+	OwnerRoomUser.SessionIdent = ident
 }

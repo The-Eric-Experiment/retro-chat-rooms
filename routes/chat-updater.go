@@ -12,7 +12,6 @@ import (
 
 func GetChatUpdater(c *gin.Context) {
 	id := c.Param("id")
-	userId := c.Param("userId")
 
 	room := chatroom.FindRoomByID(id)
 
@@ -21,7 +20,9 @@ func GetChatUpdater(c *gin.Context) {
 		return
 	}
 
-	user := room.GetUser(userId)
+	userSession := session.GetSessionUserIdent(c)
+
+	user := room.GetUserBySessionIdent(userSession)
 
 	if user == nil {
 		c.HTML(http.StatusOK, "chat-updater.html", gin.H{
@@ -64,7 +65,6 @@ func GetChatUpdater(c *gin.Context) {
 	getData := func() gin.H {
 		return gin.H{
 			"ID":              room.ID,
-			"UserID":          user.ID,
 			"HasMessages":     hasMessages,
 			"UserListUpdated": userListUpdated,
 			"Color":           room.Color,
