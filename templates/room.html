@@ -1,0 +1,17 @@
+<html>
+
+<head>
+    <meta http-equiv="PRAGMA" content="NO-CACHE" />
+    <title>{{ .Name }} Chat Room</title>
+</head>
+<frameset rows="{{.HeaderHeight}},*,110,2" border=0 frameborder=0>
+    <frame src="{{ .ID | urlChatHeader }}" name="header" scrolling=no noresize border=0 frameborder=0>
+        <frameset cols="80%,*" border=0 border=0 frameborder=0>
+            <frame src="{{ .ID | urlChatThread }}" name="listen" scrolling=auto noresize border=0 frameborder=0>
+                <frame src="{{ .ID | urlChatUsers }}" name="userlist" noresize border=0 frameborder=0>
+        </frameset>
+        <frame src="{{ urlChatTalk .ID ""}}" name="talk" scrolling=no noresize border=0 frameborder=0>
+            <frame src="{{ .ID | urlChatUpdater}}" name="updater" scrolling=no noresize border=0 frameborder=0>
+</frameset>
+
+</html>

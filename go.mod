@@ -10,11 +10,11 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/samber/lo v1.11.0
 	github.com/steambap/captcha v1.4.1
+	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/alexander-melentyev/gin-nocache v1.0.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

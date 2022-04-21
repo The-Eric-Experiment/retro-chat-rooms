@@ -62,16 +62,23 @@ func GetChatUpdater(c *gin.Context) {
 
 	user.LastPing = time.Now().UTC()
 
+	suportsChatEventAwaiter, found := session.GetSessionValue(userSession, "supportsChatEventAwaiter")
+
+	if !found {
+		suportsChatEventAwaiter = true
+	}
+
 	getData := func() gin.H {
 		return gin.H{
-			"ID":              room.ID,
-			"HasMessages":     hasMessages,
-			"UserListUpdated": userListUpdated,
-			"Color":           room.Color,
+			"ID":                       room.ID,
+			"HasMessages":              hasMessages,
+			"UserListUpdated":          userListUpdated,
+			"Color":                    room.Color,
+			"SupportsChatEventAwaiter": suportsChatEventAwaiter.(bool),
 		}
 	}
 
-	if userListUpdated || hasMessages {
+	if userListUpdated || hasMessages || !suportsChatEventAwaiter.(bool) {
 		c.HTML(http.StatusOK, "chat-updater.html", getData())
 		return
 	}

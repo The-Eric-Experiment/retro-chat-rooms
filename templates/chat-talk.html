@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <base target="updater" />
+  <meta http-equiv="PRAGMA" content="NO-CACHE" />
   <title></title>
 </head>
 
@@ -14,15 +14,15 @@
             <strong>{{ .Nickname }}</strong>
           </font>
           <br />
-          <form action="/logout" method="POST">
+          <form action="{{ urlLogout }}" method="POST">
             <input type="hidden" name="id" value="{{ .ID }}" />
             <input type="hidden" name="userId" value="{{ .UserId }}" />
             <input type="submit" name="exit" value="Exit" />
           </form>
         </td>
         <td>
-          <form name="talkform" action="/post-message" method="POST"
-            onSubmit="document.talkform.message.value=document.talkform.message2.value;document.talkform.message2.value='';">
+          <!-- onSubmit="document.talkform.message.value=document.talkform.message2.value;document.talkform.message2.value='';" -->
+          <form name="talkform" action="{{urlChatTalk .ID ""}}" method="POST">
             <input type="hidden" name="id" value="{{ .ID }}" />
             <input type="hidden" name="userId" value="{{ .UserId }}" />
             <input type="checkbox" name="private" id="private" /><label for="private">
@@ -44,14 +44,19 @@
             </font>
             {{end}}
             <br />
-            <input type="text" name="message2" size="45" />
-            <input type="hidden" name="message" size="45" />
+            <input type="text" name="message" size="45" />
             <input tabindex="1" type="submit" value="Send" />
           </form>
         </td>
       </tr>
     </tbody>
   </table>
+
+  {{if .UpdateUpdater}}
+  <script language="javascript">
+    parent.updater.location = "{{ .ID | urlChatUpdater }}";
+  </script>
+  {{end}}
 </body>
 
 </html>

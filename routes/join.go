@@ -3,16 +3,45 @@ package routes
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"log"
 	"net/http"
 	"regexp"
 	"retro-chat-rooms/chatroom"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/profanity"
 	"retro-chat-rooms/session"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/ua-parser/uap-go/uaparser"
 )
+
+func supportsChatEventAwaiter(c *gin.Context) bool {
+	parser, err := uaparser.New("./ua_regexes.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := parser.Parse(c.GetHeader("User-Agent"))
+	family := strings.ToLower(client.UserAgent.Family)
+	major, err := strconv.ParseInt(client.UserAgent.Major, 10, 0)
+
+	if err != nil {
+		major = 99
+	}
+
+	if family == "opera" && major <= 4 {
+		return false
+	}
+
+	if family == "ie" && major <= 3 {
+		return false
+	}
+
+	return true
+}
 
 func getJoinData(c *gin.Context, room *chatroom.Room, errors []string) *gin.H {
 	if room == nil {
@@ -25,13 +54,14 @@ func getJoinData(c *gin.Context, room *chatroom.Room, errors []string) *gin.H {
 	}
 
 	return &gin.H{
-		"Errors":      errors,
-		"Colors":      chatroom.NICKNAME_COLORS,
-		"Color":       room.Color,
-		"TextColor":   room.TextColor,
-		"Description": room.Description,
-		"ID":          room.ID,
-		"Name":        room.Name,
+		"CaptchaBuster": uuid.NewString(),
+		"Errors":        errors,
+		"Colors":        chatroom.NICKNAME_COLORS,
+		"Color":         room.Color,
+		"TextColor":     room.TextColor,
+		"Description":   room.Description,
+		"ID":            room.ID,
+		"Name":          room.Name,
 	}
 }
 
@@ -66,7 +96,7 @@ func PostJoin(c *gin.Context) {
 	nickname := credentials[0]
 
 	if room == nil {
-		c.Redirect(http.StatusFound, "/")
+		c.Redirect(http.StatusFound, BustCache("/"))
 		return
 	}
 
@@ -127,5 +157,7 @@ func PostJoin(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/room/"+room.ID)
+	session.SetSessionValue(userIdent, "supportsChatEventAwaiter", supportsChatEventAwaiter(c))
+
+	c.Redirect(http.StatusFound, UrlRoom(room.ID))
 }

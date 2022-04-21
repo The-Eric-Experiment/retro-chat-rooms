@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"retro-chat-rooms/routes"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,6 +50,16 @@ func LoadTemplates(router *gin.Engine) {
 		"isMessageToSelf":  isMessageToSelf,
 		"countUsers":       countUsers,
 		"hasStrings":       hasStrings,
+		"bustCache":        routes.BustCache,
+		"urlRoom":          routes.UrlRoom,
+		"urlJoin":          routes.UrlJoin,
+		"urlLogout":        routes.UrlLogout,
+		"urlCaptcha":       routes.UrlCaptcha,
+		"urlChatHeader":    routes.UrlChatHeader,
+		"urlChatThread":    routes.UrlChatThread,
+		"urlChatUpdater":   routes.UrlChatUpdater,
+		"urlChatTalk":      routes.UrlChatTalk,
+		"urlChatUsers":     routes.UrlChatUsers,
 	}
 
 	templates := getAllTemplates()
@@ -56,23 +67,10 @@ func LoadTemplates(router *gin.Engine) {
 	t := template.New("").Delims("{{", "}}").Funcs(funcMap)
 
 	for filename, content := range templates {
-		defineExpr, err := regexp.Compile("\\{\\{[\\s]*define[\\s]+\"[^\"]+\"[\\s]*}}")
-		if err != nil {
-			panic(err)
-		}
-		tagStartExpr, err := regexp.Compile("(>(?:[\\s\n\r])+)")
-		if err != nil {
-			panic(err)
-		}
-
-		tagEndExpr, err := regexp.Compile("((?:[\\s\n\r])+<)")
-		if err != nil {
-			panic(err)
-		}
-		spaceExpr, err := regexp.Compile("[\\s\r\n]+")
-		if err != nil {
-			panic(err)
-		}
+		defineExpr := regexp.MustCompile("\\{\\{[\\s]*define[\\s]+\"[^\"]+\"[\\s]*}}")
+		tagStartExpr := regexp.MustCompile("(>(?:[\\s\n\r])+)")
+		tagEndExpr := regexp.MustCompile("((?:[\\s\n\r])+<)")
+		spaceExpr := regexp.MustCompile("[\\s\r\n]+")
 		contained := "{{ define \"" + filename + "\" }}" + content + "{{end}}"
 		if defineExpr.MatchString(content) {
 			contained = content

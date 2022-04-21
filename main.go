@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"retro-chat-rooms/chatroom"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/discord"
@@ -10,7 +11,6 @@ import (
 	"retro-chat-rooms/tasks"
 	"retro-chat-rooms/templates"
 
-	nocache "github.com/alexander-melentyev/gin-nocache"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +26,15 @@ func main() {
 
 	router := gin.Default()
 
-	router.Use(nocache.NoCache())
+	router.Use(func(c *gin.Context) {
+		// Except for these
+		imgRegexp := regexp.MustCompile(`\.(gif|jpeg|jpg|png)$`)
+		if !imgRegexp.MatchString(c.Request.URL.Path) {
+			c.Header("Pragma", "no-cache")
+			c.Header("Cache-Control", "no-cache")
+		}
+		c.Next()
+	})
 
 	router.Use(static.Serve("/public", static.LocalFile("./public", true)))
 
@@ -45,8 +53,8 @@ func main() {
 	router.GET("/chat-thread/:id", routes.GetChatThread)
 	router.GET("/chat-updater/:id", routes.GetChatUpdater)
 	router.GET("/chat-talk/:id", routes.GetChatTalk)
+	router.POST("/chat-talk/:id", routes.PostChatTalk)
 	router.GET("/chat-users/:id", routes.GetChatUsers)
-	router.POST("/post-message", routes.PostMessage)
 
 	discord.Instance.Connect()
 	discord.Instance.OnReceiveMessage(routes.ReceiveDiscordMessage)

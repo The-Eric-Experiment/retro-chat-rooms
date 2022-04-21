@@ -23,11 +23,11 @@ func GetRoom(c *gin.Context) {
 	user := room.GetUserBySessionIdent(sessionIdent)
 
 	if user == nil {
-		c.Redirect(http.StatusTemporaryRedirect, "/join/"+room.ID)
+		c.Redirect(301, UrlJoin(room.ID))
 		return
 	}
 
-	c.HTML(http.StatusOK, "main.html", gin.H{
+	c.HTML(http.StatusOK, "room.html", gin.H{
 		"Name":         room.Name,
 		"Color":        room.Color,
 		"ID":           room.ID,

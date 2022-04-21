@@ -2,23 +2,27 @@
 
 <head>
   <meta http-equiv="PRAGMA" content="NO-CACHE" />
-  <meta http-equiv="Refresh" content="1;URL=/chat-updater/{{ .ID }}" />
+  {{ if .SupportsChatEventAwaiter }}
+  <meta http-equiv="Refresh" content="1;URL={{ .ID | urlChatUpdater }}" />
+  {{ else }}
+  <meta http-equiv="Refresh" content="5;URL={{ .ID | urlChatUpdater }}" />
+  {{end}}
   <meta http-equiv="Expires" content="0" />
 </head>
 
 <body bgcolor="{{.Color}}">
   {{if .HasMessages}}
   <script language="javascript">
-    parent.listen.location = "/chat-thread/{{ .ID }}";
+    parent.listen.location = "{{ .ID | urlChatThread }}";
   </script>
   {{end}} {{if .UserListUpdated}}
   <script language="javascript">
-    parent.userlist.location = "/chat-users/{{ .ID }}";
+    parent.userlist.location = "{{ .ID | urlChatUsers}}";
   </script>
   {{end}}
   {{if .UserGone}}
   <script language="javascript">
-    top.location = "/";
+    top.location = {{ "/" | bustCache }};
   </script>
   {{end}}
 </body>

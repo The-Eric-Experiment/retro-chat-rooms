@@ -2,7 +2,7 @@
 <ul>
   {{ range $i, $r := .Rooms }}
   <li>
-    <a href="/join/{{ $r.ID }}">
+    <a href="{{ $r.ID | urlJoin }}">
       <font face="arial,helvetica" color="{{ $r.Color }}" size="4"><strong>{{ $r.Name }}</strong></font>
     </a>&nbsp;
     <font face="arial,helvetica">

@@ -8,6 +8,7 @@ import (
 )
 
 func GetIndex(c *gin.Context) {
+
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"Rooms": chatroom.CHAT_ROOMS,
 	})
