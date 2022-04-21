@@ -23,7 +23,7 @@ func PostMessage(c *gin.Context) {
 	now := time.Now().UTC()
 
 	if len(strings.TrimSpace(message)) == 0 {
-		c.Redirect(http.StatusFound, "/chat-updater/"+id)
+		c.Redirect(301, "/chat-updater/"+id)
 		return
 	}
 
@@ -77,7 +77,7 @@ func PostMessage(c *gin.Context) {
 			SpeechMode:      chatroom.MODE_SAY_TO,
 		})
 
-		c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
+		c.Redirect(301, "/chat-updater/"+room.ID)
 		return
 	}
 
@@ -98,7 +98,7 @@ func PostMessage(c *gin.Context) {
 			SpeechMode:      chatroom.MODE_SAY_TO,
 		})
 
-		c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
+		c.Redirect(301, "/chat-updater/"+room.ID)
 		return
 	}
 
@@ -120,7 +120,7 @@ func PostMessage(c *gin.Context) {
 
 	room.Update()
 
-	c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
+	c.Redirect(301, "/chat-updater/"+room.ID)
 }
 
 func ReceiveDiscordMessage(m *discordgo.MessageCreate) {

@@ -27,5 +27,5 @@ func PostLogout(c *gin.Context) {
 
 	room.DeregisterUser(user)
 
-	c.Redirect(http.StatusFound, "/chat-updater/"+room.ID)
+	c.Redirect(301, "/chat-updater/"+room.ID)
 }

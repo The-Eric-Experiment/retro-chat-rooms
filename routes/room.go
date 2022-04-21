@@ -27,7 +27,7 @@ func GetRoom(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusFound, "main.html", gin.H{
+	c.HTML(http.StatusOK, "main.html", gin.H{
 		"Name":         room.Name,
 		"Color":        room.Color,
 		"ID":           room.ID,

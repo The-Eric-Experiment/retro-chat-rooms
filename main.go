@@ -10,6 +10,7 @@ import (
 	"retro-chat-rooms/tasks"
 	"retro-chat-rooms/templates"
 
+	nocache "github.com/alexander-melentyev/gin-nocache"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +25,8 @@ func main() {
 	go tasks.ObserveMessagesForDiscord()
 
 	router := gin.Default()
+
+	router.Use(nocache.NoCache())
 
 	router.Use(static.Serve("/public", static.LocalFile("./public", true)))
 
