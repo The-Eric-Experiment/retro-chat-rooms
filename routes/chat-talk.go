@@ -4,18 +4,48 @@ import (
 	"net/http"
 	"regexp"
 	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/floodcontrol"
 	"retro-chat-rooms/profanity"
-	"retro-chat-rooms/session"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 )
 
+func checkForMessageAbuse(room *chatroom.Room, user *chatroom.RoomUser) bool {
+	if user.IsDiscordUser || user.IsAdmin {
+		return false
+	}
+
+	messages := room.GetUserMessages(user)
+
+	if len(messages) < floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT {
+		return false
+	}
+
+	firstMessage, err := lo.Last(messages[0:floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT])
+	if err != nil {
+		return false
+	}
+
+	messages = messages[0 : floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT-1]
+
+	for _, msg := range messages {
+		seconds := msg.Time.Sub(firstMessage.Time).Seconds()
+		if seconds > floodcontrol.MESSAGE_FLOOD_RANGE_SEC {
+			return false
+		}
+	}
+
+	return true
+}
+
 func sendHtml(c *gin.Context, room *chatroom.Room, user *chatroom.RoomUser, toUserId string, updateUpdater bool) {
-	to := room.GetUser(toUserId)
+	to := room.GetUserByID(toUserId)
 
 	c.HTML(http.StatusOK, "chat-talk.html", gin.H{
 		"ID":            room.ID,
@@ -40,8 +70,7 @@ func GetChatTalk(c *gin.Context) {
 		return
 	}
 
-	ident := session.GetSessionUserIdent(c)
-	user := room.GetUserBySessionIdent(ident)
+	user := room.GetUser(c)
 
 	if user == nil {
 		c.Status(http.StatusNotFound)
@@ -51,7 +80,7 @@ func GetChatTalk(c *gin.Context) {
 	sendHtml(c, room, user, toUserId, false)
 }
 
-func PostChatTalk(c *gin.Context) {
+func PostChatTalk(c *gin.Context, session sessions.Session) {
 	id := c.PostForm("id")
 	message := c.PostForm("message")
 	to := c.PostForm("to")
@@ -67,8 +96,7 @@ func PostChatTalk(c *gin.Context) {
 		return
 	}
 
-	ident := session.GetSessionUserIdent(c)
-	user := room.GetUserBySessionIdent(ident)
+	user := room.GetUser(c)
 
 	if user == nil {
 		c.Status(http.StatusNotFound)
@@ -80,37 +108,43 @@ func PostChatTalk(c *gin.Context) {
 		return
 	}
 
-	suportsChatEventAwaiter, found := session.GetSessionValue(ident, "supportsChatEventAwaiter")
+	suportsChatEventAwaiter := session.Get("supportsChatEventAwaiter")
 
-	if !found {
+	if suportsChatEventAwaiter == nil {
 		suportsChatEventAwaiter = true
 	}
 
 	updateUpdater := !(suportsChatEventAwaiter.(bool))
 
-	if session.IsIPBanned(user.SessionIdent) {
+	if checkForMessageAbuse(room, user) {
+		floodcontrol.SetFlooded(c)
+	}
+
+	if floodcontrol.IsIPBanned(c) {
 		sendHtml(c, room, user, toUserId, updateUpdater)
 		return
 	}
 
-	coolDownMessageSent, found := session.GetSessionValue(user.SessionIdent, "coolDownMessageSent")
+	coolDownMessageSent := session.Get("coolDownMessageSent")
 
-	if session.IsCooldownPeriod(user.SessionIdent) && (!found || !coolDownMessageSent.(bool)) {
+	if floodcontrol.IsCooldownPeriod(c) && (coolDownMessageSent == nil || !coolDownMessageSent.(bool)) {
 		room.SendMessage(&chatroom.RoomMessage{
 			Time:            now,
 			To:              user,
 			From:            user,
 			IsSystemMessage: true,
-			Message:         "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(session.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
+			Message:         "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
 			Privately:       true,
 			SpeechMode:      chatroom.MODE_SAY_TO,
 		})
-		session.SetSessionValue(user.SessionIdent, "coolDownMessageSent", true)
+		session.Set("coolDownMessageSent", true)
+		session.Save()
 		sendHtml(c, room, user, toUserId, updateUpdater)
 		return
 	}
 
-	session.SetSessionValue(user.SessionIdent, "coolDownMessageSent", false)
+	session.Set("coolDownMessageSent", false)
+	session.Save()
 
 	// Check if there's slurs
 
@@ -133,9 +167,9 @@ func PostChatTalk(c *gin.Context) {
 
 	// Check if user has screamed recently
 
-	lastScream, hasValue := session.GetSessionValue(user.SessionIdent, "lastScream")
+	lastScream := session.Get("lastScream")
 
-	if hasValue && now.Sub(*lastScream.(*time.Time)).Minutes() <= chatroom.USER_SCREAM_TIMEOUT_MIN && mode == chatroom.MODE_SCREAM_AT {
+	if lastScream != nil && now.Sub(*lastScream.(*time.Time)).Minutes() <= chatroom.USER_SCREAM_TIMEOUT_MIN && mode == chatroom.MODE_SCREAM_AT {
 		room.SendMessage(&chatroom.RoomMessage{
 			Time:            now,
 			To:              user,
@@ -150,10 +184,11 @@ func PostChatTalk(c *gin.Context) {
 		return
 	}
 
-	userTo := room.GetUser(to)
+	userTo := room.GetUserByID(to)
 
 	if mode == chatroom.MODE_SCREAM_AT {
-		session.SetSessionValue(user.SessionIdent, "lastScream", &now)
+		session.Set("lastScream", &now)
+		session.Save()
 	}
 
 	room.SendMessage(&chatroom.RoomMessage{
@@ -180,7 +215,7 @@ func ReceiveDiscordMessage(m *discordgo.MessageCreate) {
 		return
 	}
 
-	user := room.GetUser(m.Author.ID)
+	user := room.GetUserByID(m.Author.ID)
 	if user == nil {
 		user = room.RegisterDiscordUser(m.Author)
 	}

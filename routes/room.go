@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"retro-chat-rooms/chatroom"
 	"retro-chat-rooms/config"
-	"retro-chat-rooms/session"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,8 +18,7 @@ func GetRoom(c *gin.Context) {
 		return
 	}
 
-	sessionIdent := session.GetSessionUserIdent(c)
-	user := room.GetUserBySessionIdent(sessionIdent)
+	user := room.GetUser(c)
 
 	if user == nil {
 		c.Redirect(301, UrlJoin(room.ID))

@@ -1,4 +1,4 @@
-package session
+package floodcontrol
 
 const (
 	// how long the user has to wait to send

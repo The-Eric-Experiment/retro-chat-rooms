@@ -4,13 +4,13 @@ import (
 	"errors"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/pubsub"
-	"retro-chat-rooms/session"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/samber/lo"
 )
@@ -23,7 +23,6 @@ type Room struct {
 	DiscordChannel     string
 	Messages           []*RoomMessage
 	Users              []*RoomUser
-	DiscordUsers       []*RoomUser
 	LastUserListUpdate time.Time
 	mutex              sync.Mutex
 	ChatEventAwaiter   ChatEventAwaiter
@@ -50,11 +49,8 @@ func (room *Room) Initialize() {
 	room.ChatEventAwaiter.Initialize()
 }
 
-func (room *Room) RegisterUser(nickname string, color string, sessionIdent string) (*RoomUser, error) {
+func (room *Room) RegisterUser(userId string, nickname string, color string) (*RoomUser, error) {
 	now := time.Now().UTC()
-	inputNickname := strings.ToLower(strings.TrimSpace(nickname))
-
-	userId := uuid.NewSHA1(uuid.NameSpaceURL, []byte(inputNickname)).String()
 
 	room.mutex.Lock()
 	_, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.ID == userId })
@@ -71,7 +67,6 @@ func (room *Room) RegisterUser(nickname string, color string, sessionIdent strin
 		Color:              color,
 		LastPing:           now,
 		LastUserListUpdate: now,
-		SessionIdent:       sessionIdent,
 	}
 
 	room.mutex.Lock()
@@ -98,7 +93,7 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 	now := time.Now().UTC()
 
 	room.mutex.Lock()
-	foundUser, found := lo.Find(room.DiscordUsers, func(user *RoomUser) bool { return user.ID == discordUser.ID })
+	foundUser, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.ID == discordUser.ID && user.IsDiscordUser })
 	room.mutex.Unlock()
 
 	if found {
@@ -112,13 +107,12 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 		Color:              USER_COLOR_BLACK,
 		LastPing:           now,
 		LastUserListUpdate: now,
-		SessionIdent:       discordUser.ID,
-		IsOwner:            false,
+		IsAdmin:            false,
 		IsDiscordUser:      true,
 	}
 
 	room.mutex.Lock()
-	room.DiscordUsers = append(room.DiscordUsers, user)
+	room.Users = append(room.Users, user)
 	room.mutex.Unlock()
 
 	room.Update()
@@ -127,7 +121,7 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 }
 
 func (room *Room) DeregisterUser(user *RoomUser) {
-	if OwnerRoomUser != nil && user.ID == OwnerRoomUser.ID {
+	if user.IsAdmin {
 		LogoutOwner()
 		return
 	}
@@ -154,8 +148,8 @@ func (room *Room) DeregisterUser(user *RoomUser) {
 
 func (room *Room) DeregisterDiscordUser(user *RoomUser) {
 	room.mutex.Lock()
-	room.Users = lo.Filter(room.DiscordUsers, func(u *RoomUser, _ int) bool {
-		return u.ID != user.ID
+	room.Users = lo.Filter(room.Users, func(u *RoomUser, _ int) bool {
+		return u.ID != user.ID && u.IsDiscordUser
 	})
 	room.mutex.Unlock()
 
@@ -172,27 +166,33 @@ func (room *Room) SendMessage(message *RoomMessage) {
 		Message: message,
 	})
 
-	if checkForMessageAbuse(room, message.From) {
-		session.SetFlooded(message.From.SessionIdent)
-	}
-
 	if len(room.Messages) > MAX_MESSAGES {
 		room.Messages = room.Messages[0:MAX_MESSAGES]
 	}
 }
 
-func (room *Room) GetUser(userId string) *RoomUser {
+func (room *Room) GetUser(c *gin.Context) *RoomUser {
+	session := sessions.Default(c)
+	userId := session.Get("userId")
+
+	if userId == nil {
+		return nil
+	}
+
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
-	if OwnerRoomUser != nil && (userId == OwnerRoomUser.ID || userId == config.Current.OwnerChatUser.DiscordId) {
-		return OwnerRoomUser
-	}
 
-	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return r.ID == userId })
-
+	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
 	if found {
-		return discordUser
+		return roomUser
 	}
+
+	return nil
+}
+
+func (room *Room) GetUserByID(userId string) *RoomUser {
+	defer room.mutex.Unlock()
+	room.mutex.Lock()
 
 	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return r.ID == userId })
 	if found {
@@ -207,16 +207,6 @@ func (room *Room) GetUserByNickname(nickname string) *RoomUser {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
 
-	if OwnerRoomUser != nil && cleanNickname == strings.TrimSpace(strings.ToLower(OwnerRoomUser.Nickname)) {
-		return OwnerRoomUser
-	}
-
-	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return strings.TrimSpace(strings.ToLower(r.Nickname)) == cleanNickname })
-
-	if found {
-		return discordUser
-	}
-
 	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return strings.TrimSpace(strings.ToLower(r.Nickname)) == cleanNickname })
 	if found {
 		return roomUser
@@ -225,26 +215,17 @@ func (room *Room) GetUserByNickname(nickname string) *RoomUser {
 	return nil
 }
 
-func (room *Room) GetUserBySessionIdent(sessionIdent string) *RoomUser {
+func (room *Room) GetUserMessages(user *RoomUser) []*RoomMessage {
 	defer room.mutex.Unlock()
 	room.mutex.Lock()
+	return lo.Filter(room.Messages, func(message *RoomMessage, _ int) bool { return message.From.ID == user.ID })
+}
 
-	if OwnerRoomUser != nil && sessionIdent == OwnerRoomUser.SessionIdent {
-		return OwnerRoomUser
-	}
-
-	discordUser, found := lo.Find(room.DiscordUsers, func(r *RoomUser) bool { return r.SessionIdent == sessionIdent })
-
-	if found {
-		return discordUser
-	}
-
-	roomUser, found := lo.Find(room.Users, func(r *RoomUser) bool { return r.SessionIdent == sessionIdent })
-	if found {
-		return roomUser
-	}
-
-	return nil
+func (room *Room) GetOnlineUsers() int {
+	defer room.mutex.Unlock()
+	room.mutex.Lock()
+	filtered := lo.Filter(room.Users, func(u *RoomUser, _ int) bool { return !u.IsDiscordUser })
+	return len(filtered)
 }
 
 func (room *Room) Update() {
@@ -263,7 +244,6 @@ func FromConfig() []*Room {
 			DiscordChannel:     cr.DiscordChannel,
 			Messages:           make([]*RoomMessage, 0),
 			Users:              make([]*RoomUser, 0),
-			DiscordUsers:       make([]*RoomUser, 0),
 			LastUserListUpdate: time.Now().UTC(),
 			TextColor:          determineTextColor(cr.Color),
 		}
@@ -271,32 +251,4 @@ func FromConfig() []*Room {
 		room.Initialize()
 		return room
 	})
-}
-
-func checkForMessageAbuse(room *Room, user *RoomUser) bool {
-	if user.IsDiscordUser || user.IsOwner {
-		return false
-	}
-
-	messages := lo.Filter(room.Messages, func(message *RoomMessage, _ int) bool { return message.From.ID == user.ID })
-
-	if len(messages) < session.MESSAGE_FLOOD_MESSAGES_COUNT {
-		return false
-	}
-
-	firstMessage, err := lo.Last(messages[0:session.MESSAGE_FLOOD_MESSAGES_COUNT])
-	if err != nil {
-		return false
-	}
-
-	messages = messages[0 : session.MESSAGE_FLOOD_MESSAGES_COUNT-1]
-
-	for _, msg := range messages {
-		seconds := msg.Time.Sub(firstMessage.Time).Seconds()
-		if seconds > session.MESSAGE_FLOOD_RANGE_SEC {
-			return false
-		}
-	}
-
-	return true
 }

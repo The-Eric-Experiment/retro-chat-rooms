@@ -10,7 +10,7 @@ func CheckUserStatus(rooms []*chatroom.Room) {
 		for _, room := range rooms {
 			// Check if there are expired users
 			for _, user := range room.Users {
-				if time.Now().UTC().Sub(user.LastPing).Seconds() > chatroom.USER_LOGOUT_TIMEOUT {
+				if !user.IsDiscordUser && time.Now().UTC().Sub(user.LastPing).Seconds() > chatroom.USER_LOGOUT_TIMEOUT {
 					room.DeregisterUser(user)
 				}
 			}

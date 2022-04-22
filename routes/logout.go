@@ -9,7 +9,6 @@ import (
 
 func PostLogout(c *gin.Context) {
 	id := c.PostForm("id")
-	userId := c.PostForm("userId")
 
 	room := chatroom.FindRoomByID(id)
 
@@ -18,7 +17,7 @@ func PostLogout(c *gin.Context) {
 		return
 	}
 
-	user := room.GetUser(userId)
+	user := room.GetUser(c)
 
 	if user == nil {
 		c.Status(http.StatusNotFound)
@@ -27,5 +26,6 @@ func PostLogout(c *gin.Context) {
 
 	room.DeregisterUser(user)
 
+	// TODO: This shouldn't happen here
 	c.Redirect(301, UrlChatUpdater(room.ID))
 }

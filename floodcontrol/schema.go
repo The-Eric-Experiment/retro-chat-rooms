@@ -1,8 +1,6 @@
-package session
+package floodcontrol
 
 import "time"
-
-type UserSession map[string]interface{}
 
 type FloodControl struct {
 	LastMessageFlood  time.Time

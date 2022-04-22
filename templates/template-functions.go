@@ -47,8 +47,8 @@ func isMessageToSelf(userId string, message *chatroom.RoomMessage) bool {
 	return userId == message.To.ID
 }
 
-func countUsers(input []*chatroom.RoomUser) int {
-	return len(input)
+func countUsers(room *chatroom.Room) int {
+	return room.GetOnlineUsers()
 }
 
 func hasStrings(input []string) bool {

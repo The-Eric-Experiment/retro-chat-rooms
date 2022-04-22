@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"retro-chat-rooms/chatroom"
-	"retro-chat-rooms/session"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,8 +18,7 @@ func GetChatUsers(c *gin.Context) {
 		return
 	}
 
-	ident := session.GetSessionUserIdent(c)
-	user := room.GetUserBySessionIdent(ident)
+	user := room.GetUser(c)
 
 	if user == nil {
 		c.Status(http.StatusNotFound)
@@ -31,8 +29,7 @@ func GetChatUsers(c *gin.Context) {
 		"ID":          room.ID,
 		"UserID":      user.ID,
 		"Users":       room.Users,
-		"UsersOnline": len(room.Users),
+		"UsersOnline": room.GetOnlineUsers(),
 		"RoomTime":    time.Now().UTC(),
-		"ChatOwner":   chatroom.OwnerRoomUser,
 	})
 }

@@ -4,13 +4,13 @@ import (
 	"image/color"
 	"image/gif"
 	"net/http"
-	"retro-chat-rooms/session"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/steambap/captcha"
 )
 
-func GetChaptcha(ctx *gin.Context) {
+func GetChaptcha(ctx *gin.Context, session sessions.Session) {
 	data, err := captcha.NewMathExpr(222, 122, func(options *captcha.Options) {
 		options.FontScale = 1
 		options.BackgroundColor = color.White
@@ -25,8 +25,8 @@ func GetChaptcha(ctx *gin.Context) {
 		return
 	}
 
-	userSessionIdent := session.GetSessionUserIdent(ctx)
-	session.SetSessionValue(userSessionIdent, "captcha", data.Text)
+	session.Set("chaptcha", data.Text)
+	session.Save()
 
 	data.WriteGIF(ctx.Writer, &gif.Options{
 		NumColors: 256,

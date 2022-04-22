@@ -21,7 +21,7 @@ func formatMessageForDiscord(m *chatroom.RoomMessage) string {
 
 	if m.To != nil {
 		// Yuck
-		if m.To.IsOwner && config.Current.OwnerChatUser.DiscordId != "" {
+		if m.To.IsAdmin && config.Current.OwnerChatUser.DiscordId != "" {
 			message += "<@" + config.Current.OwnerChatUser.DiscordId + ">"
 		} else if m.To.IsDiscordUser {
 			message += "<@" + m.To.ID + ">"

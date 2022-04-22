@@ -37,7 +37,6 @@ type RoomUser struct {
 	Color              string
 	LastPing           time.Time
 	LastUserListUpdate time.Time
-	SessionIdent       string
 	IsDiscordUser      bool
-	IsOwner            bool
+	IsAdmin            bool
 }

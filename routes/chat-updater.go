@@ -3,14 +3,15 @@ package routes
 import (
 	"net/http"
 	"retro-chat-rooms/chatroom"
-	"retro-chat-rooms/session"
+	"retro-chat-rooms/floodcontrol"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 )
 
-func GetChatUpdater(c *gin.Context) {
+func GetChatUpdater(c *gin.Context, session sessions.Session) {
 	id := c.Param("id")
 
 	room := chatroom.FindRoomByID(id)
@@ -20,9 +21,7 @@ func GetChatUpdater(c *gin.Context) {
 		return
 	}
 
-	userSession := session.GetSessionUserIdent(c)
-
-	user := room.GetUserBySessionIdent(userSession)
+	user := room.GetUser(c)
 
 	if user == nil {
 		c.HTML(http.StatusOK, "chat-updater.html", gin.H{
@@ -32,9 +31,8 @@ func GetChatUpdater(c *gin.Context) {
 		return
 	}
 
-	if session.IsIPBanned(user.SessionIdent) {
+	if floodcontrol.IsIPBanned(c) {
 		room.SendMessage(&chatroom.RoomMessage{
-			From:            chatroom.OwnerRoomUser,
 			Time:            time.Now().UTC(),
 			Message:         "{nickname} was kicked for flooding the channel too many times.",
 			IsSystemMessage: true,
@@ -62,10 +60,10 @@ func GetChatUpdater(c *gin.Context) {
 
 	user.LastPing = time.Now().UTC()
 
-	suportsChatEventAwaiter, found := session.GetSessionValue(userSession, "supportsChatEventAwaiter")
+	supportsChatEventAwaiter := session.Get("supportsChatEventAwaiter")
 
-	if !found {
-		suportsChatEventAwaiter = true
+	if supportsChatEventAwaiter == nil {
+		supportsChatEventAwaiter = true
 	}
 
 	getData := func() gin.H {
@@ -74,11 +72,11 @@ func GetChatUpdater(c *gin.Context) {
 			"HasMessages":              hasMessages,
 			"UserListUpdated":          userListUpdated,
 			"Color":                    room.Color,
-			"SupportsChatEventAwaiter": suportsChatEventAwaiter.(bool),
+			"SupportsChatEventAwaiter": supportsChatEventAwaiter.(bool),
 		}
 	}
 
-	if userListUpdated || hasMessages || !suportsChatEventAwaiter.(bool) {
+	if userListUpdated || hasMessages || !supportsChatEventAwaiter.(bool) {
 		c.HTML(http.StatusOK, "chat-updater.html", getData())
 		return
 	}

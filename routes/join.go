@@ -8,11 +8,12 @@ import (
 	"regexp"
 	"retro-chat-rooms/chatroom"
 	"retro-chat-rooms/config"
+	"retro-chat-rooms/floodcontrol"
 	"retro-chat-rooms/profanity"
-	"retro-chat-rooms/session"
 	"strconv"
 	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -83,7 +84,7 @@ func GetJoin(c *gin.Context) {
 	c.HTML(http.StatusOK, "join.html", data)
 }
 
-func PostJoin(c *gin.Context) {
+func PostJoin(c *gin.Context, session sessions.Session) {
 	id := c.Param("id")
 	ni := c.PostForm("ni")
 	color := c.PostForm("co")
@@ -100,13 +101,19 @@ func PostJoin(c *gin.Context) {
 		return
 	}
 
-	userIdent := session.GetSessionUserIdent(c)
-	session.RegisterUserIP(c)
-	sessionCaptcha, foundCaptcha := session.GetSessionValue(userIdent, "captcha")
+	userId := session.Get("userId")
+
+	if userId == nil {
+		userId = uuid.NewString()
+		session.Set("userId", userId)
+		session.Save()
+	}
+
+	sessionCaptcha := session.Get("chaptcha")
 
 	errors := make([]string, 0)
 
-	if session.IsIPBanned(userIdent) {
+	if floodcontrol.IsIPBanned(c) {
 		errors = append(errors, "You have been temporarily kicked out for flooding, try again later.")
 	}
 
@@ -118,7 +125,7 @@ func PostJoin(c *gin.Context) {
 		errors = append(errors, "This nickname is not allowed.")
 	}
 
-	if !foundCaptcha || sessionCaptcha.(string) != captcha {
+	if sessionCaptcha == nil || sessionCaptcha.(string) != captcha {
 		errors = append(errors, "The entered captcha is invalid.")
 	}
 
@@ -135,14 +142,14 @@ func PostJoin(c *gin.Context) {
 			ownerPassword := strings.ToLower(config.Current.OwnerChatUser.Password)
 
 			if hash == ownerPassword && isOwnerVariation {
-				chatroom.LoginOwner(config.Current.OwnerChatUser, userIdent)
+				// chatroom.LoginOwner(config.Current.OwnerChatUser, userIdent)
 			} else {
 				errors = append(errors, "Entered credentials are invalid!")
 			}
 		} else if isOwnerVariation {
 			errors = append(errors, "Someone is already using this Nickname, try a different one.")
 		} else {
-			_, err := room.RegisterUser(nickname, color, userIdent)
+			_, err := room.RegisterUser(userId.(string), nickname, color)
 			if err != nil && err.Error() == "user exists" {
 				errors = append(errors, "Someone is already using this Nickname, try a different one.")
 			} else if err != nil {
@@ -157,7 +164,8 @@ func PostJoin(c *gin.Context) {
 		return
 	}
 
-	session.SetSessionValue(userIdent, "supportsChatEventAwaiter", supportsChatEventAwaiter(c))
+	session.Set("supportsChatEventAwaiter", supportsChatEventAwaiter(c))
+	session.Save()
 
 	c.Redirect(http.StatusFound, UrlRoom(room.ID))
 }
