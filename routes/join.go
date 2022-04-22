@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"log"
 	"net/http"
 	"regexp"
@@ -86,15 +84,11 @@ func GetJoin(c *gin.Context) {
 
 func PostJoin(c *gin.Context, session sessions.Session) {
 	id := c.Param("id")
-	ni := c.PostForm("ni")
+	nickname := c.PostForm("ni")
 	color := c.PostForm("co")
 	captcha := c.PostForm("chap")
 
 	room := chatroom.FindRoomByID(id)
-
-	credentials := strings.Split(ni, "###")
-
-	nickname := credentials[0]
 
 	if room == nil {
 		c.Redirect(http.StatusFound, BustCache("/"))
@@ -131,30 +125,17 @@ func PostJoin(c *gin.Context, session sessions.Session) {
 
 	isOwnerVariation := isNickVariation(config.Current.OwnerChatUser.Nickname, nickname)
 
+	if isOwnerVariation {
+		errors = append(errors, "Someone is already using this Nickname, try a different one.")
+	}
+
 	// YUCK THESE IFS
 	if len(errors) == 0 {
-		if len(credentials) > 1 {
-			loginPassword := credentials[1]
-			hasher := sha1.New()
-			hasher.Write([]byte(loginPassword))
-			hash := hex.EncodeToString(hasher.Sum(nil))
-
-			ownerPassword := strings.ToLower(config.Current.OwnerChatUser.Password)
-
-			if hash == ownerPassword && isOwnerVariation {
-				// chatroom.LoginOwner(config.Current.OwnerChatUser, userIdent)
-			} else {
-				errors = append(errors, "Entered credentials are invalid!")
-			}
-		} else if isOwnerVariation {
+		_, err := room.RegisterUser(userId.(string), nickname, color)
+		if err != nil && err.Error() == "user exists" {
 			errors = append(errors, "Someone is already using this Nickname, try a different one.")
-		} else {
-			_, err := room.RegisterUser(userId.(string), nickname, color)
-			if err != nil && err.Error() == "user exists" {
-				errors = append(errors, "Someone is already using this Nickname, try a different one.")
-			} else if err != nil {
-				errors = append(errors, "Couldn't register user, try again.")
-			}
+		} else if err != nil {
+			errors = append(errors, "Couldn't register user, try again.")
 		}
 	}
 

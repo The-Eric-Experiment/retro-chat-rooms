@@ -1,0 +1,30 @@
+<html>
+
+<head>
+    <title>Chat Admin Login</title>
+    <meta http-equiv="PRAGMA" content="NO-CACHE" />
+</head>
+
+<body vlink="#663366" text="#000000" link="#000099" bgcolor="#ffffff" alink="#ff0000">
+    <center>
+        <h1>Chat Admin Login</h1>
+        <form action="/admin-login" method="POST">
+            <p>Nickname:</p>
+            <input type="text" cols="40" name="u" />
+            <p>Password:</p>
+            <input type="password" cols="40" name="p" />
+            <p>Select a room:</p>
+            <select name="r">
+                {{ range $i, $r := .Rooms }}
+                <option value="{{$r.ID}}">{{$r.Name}}</option>
+                {{end}}
+            </select><br />
+            <img src="{{ urlCaptcha }}" alt="c" /><br />
+            Solve the image above: <input type="password" cols="40" name="mess" />
+            <br /><br />
+            <input type="submit" value="Login!" name="s" />
+        </form>
+    </center>
+</body>
+
+</html>

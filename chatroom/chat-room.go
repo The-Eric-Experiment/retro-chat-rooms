@@ -47,6 +47,10 @@ func determineTextColor(color string) string {
 func (room *Room) Initialize() {
 	room.TextColor = determineTextColor(room.Color)
 	room.ChatEventAwaiter.Initialize()
+
+	if config.Current.OwnerChatUser.DiscordId != "" {
+		room.RegisterOwner(true)
+	}
 }
 
 func (room *Room) RegisterUser(userId string, nickname string, color string) (*RoomUser, error) {
@@ -121,8 +125,7 @@ func (room *Room) RegisterDiscordUser(discordUser *discordgo.User) *RoomUser {
 }
 
 func (room *Room) DeregisterUser(user *RoomUser) {
-	if user.IsAdmin {
-		LogoutOwner()
+	if user.IsAdmin && user.IsDiscordUser {
 		return
 	}
 
@@ -144,6 +147,58 @@ func (room *Room) DeregisterUser(user *RoomUser) {
 	room.LastUserListUpdate = time.Now().UTC()
 
 	room.Update()
+}
+
+func (room *Room) RegisterOwner(noMessage bool) *RoomUser {
+	now := time.Now().UTC()
+
+	cfg := config.Current.OwnerChatUser
+
+	id := cfg.Id
+
+	if cfg.DiscordId != "" {
+		id = cfg.DiscordId
+	}
+
+	room.mutex.Lock()
+	user, found := lo.Find(room.Users, func(user *RoomUser) bool { return user.ID == id })
+	room.mutex.Unlock()
+
+	if found {
+		return user
+	}
+
+	user = &RoomUser{
+		ID:                 id,
+		LastActivity:       now,
+		Nickname:           cfg.Nickname,
+		Color:              cfg.Color,
+		LastPing:           now,
+		LastUserListUpdate: now,
+		IsDiscordUser:      cfg.DiscordId != "",
+		IsAdmin:            true,
+	}
+
+	room.mutex.Lock()
+	room.Users = append(room.Users, user)
+	room.mutex.Unlock()
+
+	if !noMessage {
+		room.SendMessage(&RoomMessage{
+			Time:            time.Now().UTC(),
+			Message:         "{nickname} has joined the room!",
+			IsSystemMessage: true,
+			Privately:       false,
+			SpeechMode:      SPEECH_MODES[0].Value,
+			From:            user,
+		})
+	}
+
+	room.LastUserListUpdate = time.Now().UTC()
+
+	room.Update()
+
+	return user
 }
 
 func (room *Room) DeregisterDiscordUser(user *RoomUser) {

@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"retro-chat-rooms/chatroom"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-func PostLogout(c *gin.Context) {
+func PostLogout(c *gin.Context, session sessions.Session) {
 	id := c.PostForm("id")
 
 	room := chatroom.FindRoomByID(id)
@@ -24,7 +25,12 @@ func PostLogout(c *gin.Context) {
 		return
 	}
 
-	room.DeregisterUser(user)
+	if user.IsAdmin && user.IsDiscordUser {
+		session.Set("userId", nil)
+		session.Save()
+	} else {
+		room.DeregisterUser(user)
+	}
 
 	// TODO: This shouldn't happen here
 	c.Redirect(301, UrlChatUpdater(room.ID))

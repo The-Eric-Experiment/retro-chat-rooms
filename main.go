@@ -24,7 +24,6 @@ func routeWithSession(fn func(ctx *gin.Context, session sessions.Session)) func(
 
 func main() {
 	profanity.LoadProfanityFilters()
-	// chatroom.InitializeOwner(config.Current.OwnerChatUser)
 
 	// Background Tasks
 	go tasks.CheckUserStatus(chatroom.CHAT_ROOMS)
@@ -35,16 +34,6 @@ func main() {
 	store := cookie.NewStore([]byte("secret1"))
 	router.Use(sessions.Sessions("chatsession", store))
 
-	// router.Use(func(c *gin.Context) {
-	// 	// Except for these
-	// 	imgRegexp := regexp.MustCompile(`\.(gif|jpeg|jpg|png)$`)
-	// 	if !imgRegexp.MatchString(c.Request.URL.Path) {
-	// 		c.Header("Pragma", "no-cache")
-	// 		c.Header("Cache-Control", "no-cache")
-	// 	}
-	// 	c.Next()
-	// })
-
 	router.Use(static.Serve("/public", static.LocalFile("./public", true)))
 
 	templates.LoadTemplates(router)
@@ -54,7 +43,9 @@ func main() {
 	router.GET("/join/:id", routes.GetJoin)
 	router.POST("/join/:id", routeWithSession(routes.PostJoin))
 	router.GET("/chaptcha", routeWithSession(routes.GetChaptcha))
-	router.POST("/logout", routes.PostLogout)
+	router.POST("/logout", routeWithSession(routes.PostLogout))
+	router.GET("/admin-login", routes.GetAdminLogin)
+	router.POST("/admin-login", routeWithSession(routes.PostAdminLogin))
 
 	// Main chat Screen
 	router.GET("/room/:id", routes.GetRoom)
@@ -67,17 +58,6 @@ func main() {
 
 	discord.Instance.Connect()
 	discord.Instance.OnReceiveMessage(routes.ReceiveDiscordMessage)
-
-	// go func() {
-	// 	fmt.Println("Server is now running.  Press CTRL-C to exit.")
-	// 	sc := make(chan os.Signal, 1)
-	// 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-
-	// 	<-sc
-
-	// 	fmt.Println("Disconnecting from Discord")
-	// 	discord.Close()
-	// }()
 
 	router.Run()
 	fmt.Println("closing...")
