@@ -45,11 +45,19 @@ func checkForMessageAbuse(room chat.ChatRoom, user chat.ChatUser) bool {
 }
 
 func sendHtml(c *gin.Context, room chat.ChatRoom, user chat.ChatUser, toUserId string, updateUpdater bool) {
+	var to chat.ChatUser
+	if toUserId != "" {
+		toUser, fnd := chat.GetUser(toUserId)
+		if fnd {
+			to = toUser
+		}
+	}
+
 	c.HTML(http.StatusOK, "chat-talk.html", gin.H{
 		"ID":            room.ID,
 		"UserId":        user.ID,
 		"Nickname":      user.Nickname,
-		"To":            toUserId,
+		"To":            to,
 		"Color":         room.Color,
 		"TextColor":     room.TextColor,
 		"SpeechModes":   chat.SPEECH_MODES,

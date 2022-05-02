@@ -294,7 +294,7 @@ func SendMessage(roomId string, message *ChatMessage) {
 	mutex.Lock()
 
 	for _, combinedId := range roomUsers[roomId] {
-		if message.To != "" && message.To != combinedId {
+		if message.Privately && message.To != "" && (message.To != combinedId && message.From != combinedId) {
 			continue
 		}
 

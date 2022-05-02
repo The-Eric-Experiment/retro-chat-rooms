@@ -32,11 +32,11 @@
               <option value="{{ $m.Value }}">{{ $m.Label }}</option>
               {{ end }}
             </select>&nbsp;
-            {{if not (eq .To "") }}
+            {{if not (eq .To.ID "") }}
+            <input type="hidden" name="to" value="{{ .To.ID }}" />
             <font color="{{ .TextColor }}">
               <strong>{{ .To.Nickname }}</strong>
             </font>
-            <input type="hidden" name="to" value="{{ .To.ID }}" />
             {{else}}
             <font color="{{ .TextColor }}">
               <strong>Everyone</strong>

@@ -4,30 +4,28 @@ import (
 	"regexp"
 	"retro-chat-rooms/chat"
 	"retro-chat-rooms/discord"
+	"retro-chat-rooms/pubsub"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-func observeRoomMessages(room chat.ChatRoom) {
-	if room.DiscordChannel == "" {
-		return
-	}
-
-	c := chat.RoomMessageEvents[room.ID].Subscribe("discord-bot")
+func observeRoomMessages(roomId string, events pubsub.Pubsub) {
+	c := events.Subscribe("discord-bot")
 	for message := range c {
 		msg := message.(*chat.ChatMessage)
 		if !msg.FromDiscord {
-			discord.Instance.SendMessage(room.DiscordChannel, msg)
+			room, _ := chat.GetSingleRoom(roomId)
+			if room.DiscordChannel != "" {
+				discord.Instance.SendMessage(room.DiscordChannel, msg)
+			}
 		}
 	}
 }
 
 func ObserveMessagesToDiscord() {
-	rooms := chat.GetAllRooms()
-
-	for _, room := range rooms {
-		observeRoomMessages(room)
+	for roomId, events := range chat.RoomMessageEvents {
+		go observeRoomMessages(roomId, events)
 	}
 }
 
@@ -41,16 +39,17 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 	}
 
 	combinedId := chat.GetCombinedId(roomId, m.Author.ID)
-	_, found = chat.GetUserByDiscordId(m.Author.ID)
+	user, found := chat.GetUserByDiscordId(m.Author.ID)
 	if !found {
-		chat.RegisterUser(chat.ChatUser{
+		user = chat.ChatUser{
 			RoomId:    roomId,
 			ID:        combinedId,
 			Nickname:  m.Author.Username,
 			Color:     chat.USER_COLOR_BLACK,
 			DiscordId: m.Author.ID,
 			IsAdmin:   false,
-		})
+		}
+		chat.RegisterUser(user)
 	}
 	now := time.Now().UTC()
 
@@ -72,7 +71,7 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 	chat.SendMessage(roomId, &chat.ChatMessage{
 		Time:            now,
 		Message:         content,
-		From:            combinedId,
+		From:            user.ID,
 		SpeechMode:      chat.MODE_SAY_TO,
 		To:              to,
 		IsSystemMessage: false,

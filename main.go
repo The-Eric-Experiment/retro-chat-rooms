@@ -30,7 +30,9 @@ func main() {
 
 	// Background Tasks
 	go tasks.CheckUserStatus()
-	go tasks.ObserveMessagesToDiscord()
+	tasks.ObserveMessagesToDiscord()
+	discord.Instance.Connect()
+	discord.Instance.OnReceiveMessage(tasks.OnReceiveDiscordMessage)
 
 	router := gin.Default()
 
@@ -58,9 +60,6 @@ func main() {
 	router.GET("/chat-talk/:id", routeWithSession(routes.GetChatTalk))
 	router.POST("/chat-talk/:id", routeWithSession(routes.PostChatTalk))
 	router.GET("/chat-users/:id", routeWithSession(routes.GetChatUsers))
-
-	discord.Instance.Connect()
-	discord.Instance.OnReceiveMessage(tasks.OnReceiveDiscordMessage)
 
 	log.Panicln(router.Run())
 	fmt.Println("closing...")
