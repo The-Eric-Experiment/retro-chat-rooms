@@ -67,5 +67,3 @@ func (p *pubsub) Publish(message interface{}) {
 	}
 	p.m.Unlock()
 }
-
-var Messaging = NewPubsub()

@@ -32,7 +32,7 @@
               <option value="{{ $m.Value }}">{{ $m.Label }}</option>
               {{ end }}
             </select>&nbsp;
-            {{if (isUserNotNil .To) }}
+            {{if not (eq .To "") }}
             <font color="{{ .TextColor }}">
               <strong>{{ .To.Nickname }}</strong>
             </font>

@@ -25,18 +25,11 @@
         </a>
       </td>
     </tr>
+    {{$userID := .UserID}}
+    {{range $i, $u := .Users}}
     <tr>
-      {{$userID := .UserID}}
-      {{$roomID := .ID}}
-      {{range $i, $u := .Users}}
       <td bgcolor="#EEEEEE">
-        {{if eq $u.ID $userID}}
-        {{$u | formatNickname}} <font size="-2">(Me)</font>
-        {{else}}
-        <a href="{{ urlChatTalk $roomID $u.ID}}" target="talk">
-          {{$u | formatNickname}}
-        </a>
-        {{end}}
+        {{renderUsername $userID $u}}
       </td>
     </tr>
     {{end}}

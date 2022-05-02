@@ -2,63 +2,82 @@ package routes
 
 import (
 	"net/http"
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 	"retro-chat-rooms/floodcontrol"
 	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/samber/lo"
 )
 
+func unsub(roomId string, userId string) {
+	chat.RoomListEvents[roomId].Unsubscribe(userId)
+	chat.RoomMessageEvents[roomId].Unsubscribe(userId)
+}
+
+func waitForChatEvent(roomId string, userId string, cb func(userListEvent bool, userList bool)) {
+	unsub(roomId, userId)
+	select {
+	case <-chat.RoomMessageEvents[roomId].Subscribe(userId):
+		unsub(roomId, userId)
+		cb(true, false)
+		break
+	case <-chat.RoomListEvents[roomId].Subscribe(userId):
+		unsub(roomId, userId)
+		cb(false, true)
+		break
+	case <-time.After(chat.UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
+		unsub(roomId, userId)
+		cb(false, false)
+		break
+	}
+}
+
+func getData(room chat.ChatRoom, userId string, hasMessages bool, userListUpdated bool, supportsAwaiter bool) gin.H {
+	_, found := chat.GetUser(userId)
+
+	if !found {
+		return gin.H{
+			"UserGone": true,
+			"ID":       room.ID,
+		}
+	}
+
+	chat.Ping(userId)
+
+	return gin.H{
+		"ID":                       room.ID,
+		"HasMessages":              hasMessages,
+		"UserListUpdated":          userListUpdated,
+		"Color":                    room.Color,
+		"SupportsChatEventAwaiter": supportsAwaiter,
+	}
+}
+
 func GetChatUpdater(c *gin.Context, session sessions.Session) {
-	id := c.Param("id")
+	roomId := c.Param("id")
+	userId := session.Get("userId").(string)
+	combinedId := chat.GetCombinedId(roomId, userId)
+	room, found := chat.GetSingleRoom(roomId)
 
-	room := chatroom.FindRoomByID(id)
-
-	if room == nil {
+	if !found {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	user := room.GetUser(c)
-
-	if user == nil {
-		c.HTML(http.StatusOK, "chat-updater.html", gin.H{
-			"UserGone": true,
-			"ID":       room.ID,
-		})
-		return
-	}
-
 	if floodcontrol.IsIPBanned(c) {
-		room.SendMessage(&chatroom.RoomMessage{
+		chat.SendMessage(roomId, &chat.ChatMessage{
 			Time:            time.Now().UTC(),
 			Message:         "{nickname} was kicked for flooding the channel too many times.",
 			IsSystemMessage: true,
-			SpeechMode:      chatroom.MODE_SAY_TO,
+			SpeechMode:      chat.MODE_SAY_TO,
 		})
 
-		room.DeregisterUser(user)
-		c.HTML(http.StatusOK, "chat-updater.html", gin.H{
-			"UserGone": true,
-			"ID":       room.ID,
-		})
+		chat.DeregisterUser(combinedId)
+
+		c.HTML(http.StatusOK, "chat-updater.html", getData(room, combinedId, false, false, false))
 		return
 	}
-
-	_, hasMessages := lo.Find(
-		room.Messages,
-		func(m *chatroom.RoomMessage) bool { return m.Time.Sub(user.LastPing).Seconds() > 0 },
-	)
-
-	userListUpdated := room.LastUserListUpdate.Sub(user.LastUserListUpdate).Seconds() > 0
-
-	if userListUpdated {
-		user.LastUserListUpdate = time.Now().UTC()
-	}
-
-	user.LastPing = time.Now().UTC()
 
 	supportsChatEventAwaiter := session.Get("supportsChatEventAwaiter")
 
@@ -66,25 +85,20 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 		supportsChatEventAwaiter = true
 	}
 
-	getData := func() gin.H {
-		return gin.H{
-			"ID":                       room.ID,
-			"HasMessages":              hasMessages,
-			"UserListUpdated":          userListUpdated,
-			"Color":                    room.Color,
-			"SupportsChatEventAwaiter": supportsChatEventAwaiter.(bool),
-		}
-	}
+	if !supportsChatEventAwaiter.(bool) {
+		hasMessages := chat.UserHasMessages(combinedId)
+		userListUpdated := chat.HasUserListChanged(combinedId)
 
-	if userListUpdated || hasMessages || !supportsChatEventAwaiter.(bool) {
-		c.HTML(http.StatusOK, "chat-updater.html", getData())
+		data := getData(room, combinedId, hasMessages, userListUpdated, supportsChatEventAwaiter.(bool))
+
+		c.HTML(http.StatusOK, "chat-updater.html", data)
 		return
 	}
 
 	result := make(chan gin.H)
 
-	room.ChatEventAwaiter.Await(c, func(context *gin.Context) {
-		result <- getData()
+	go waitForChatEvent(roomId, combinedId, func(hasMessages bool, userListUpdated bool) {
+		result <- getData(room, combinedId, hasMessages, userListUpdated, supportsChatEventAwaiter.(bool))
 	})
 
 	c.HTML(http.StatusOK, "chat-updater.html", <-result)

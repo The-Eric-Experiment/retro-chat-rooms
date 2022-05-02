@@ -3,15 +3,16 @@ package discord
 import (
 	"fmt" //to print errors
 
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 	"retro-chat-rooms/config"
 	"strings"
 
 	"github.com/bwmarrin/discordgo" //discordgo package from the repo of bwmarrin .
 )
 
-func formatMessageForDiscord(m *chatroom.RoomMessage) string {
-	message := "**" + m.From.Nickname + "** "
+func formatMessageForDiscord(m *chat.ChatMessage) string {
+	from, _ := chat.GetUser(m.From)
+	message := "**" + from.Nickname + "** "
 
 	if m.IsSystemMessage {
 		return strings.Replace(m.Message, "{nickname}", message, -1)
@@ -19,16 +20,16 @@ func formatMessageForDiscord(m *chatroom.RoomMessage) string {
 
 	message += "*" + modeTransform[m.SpeechMode] + "* "
 
-	if m.To != nil {
+	if m.To != "" {
+		to, _ := chat.GetUser(m.To)
 		// Yuck
-		if m.To.IsAdmin && config.Current.OwnerChatUser.DiscordId != "" {
+		if to.IsAdmin && config.Current.OwnerChatUser.DiscordId != "" {
 			message += "<@" + config.Current.OwnerChatUser.DiscordId + ">"
-		} else if m.To.IsDiscordUser {
-			message += "<@" + m.To.ID + ">"
+		} else if to.DiscordId != "" {
+			message += "<@" + to.DiscordId + ">"
 		} else {
-			message += "**" + m.To.Nickname + "**"
+			message += "**" + to.Nickname + "**"
 		}
-
 	} else {
 		message += "**Everyone**"
 	}
@@ -36,11 +37,11 @@ func formatMessageForDiscord(m *chatroom.RoomMessage) string {
 	message += ": "
 
 	switch m.SpeechMode {
-	case chatroom.MODE_SAY_TO:
+	case chat.MODE_SAY_TO:
 		message += m.Message
-	case chatroom.MODE_SCREAM_AT:
+	case chat.MODE_SCREAM_AT:
 		message += "**" + strings.ToUpper(m.Message) + "**"
-	case chatroom.MODE_WHISPER_TO:
+	case chat.MODE_WHISPER_TO:
 		message += "*" + strings.ToLower(m.Message) + "*"
 	}
 
@@ -81,7 +82,7 @@ func (bot *DiscordBot) Close() {
 	bot.session.Close()
 }
 
-func (bot *DiscordBot) SendMessage(channel string, message *chatroom.RoomMessage) {
+func (bot *DiscordBot) SendMessage(channel string, message *chat.ChatMessage) {
 	if bot.session == nil || channel == "" || message.Privately {
 		return
 	}
@@ -98,18 +99,6 @@ func (bot *DiscordBot) OnReceiveMessage(fn func(m *discordgo.MessageCreate)) {
 
 	bot.session.AddHandler(messageListen(fn))
 }
-
-// func StartDiscordBot() {
-
-// 	// Wait here until CTRL-C or other term signal is received.
-// 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
-// 	sc := make(chan os.Signal, 1)
-// 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-// 	<-sc
-
-// 	// Cleanly close down the Discord session.
-// 	dg.Close()
-// }
 
 func messageListen(fn func(m *discordgo.MessageCreate)) func(s *discordgo.Session, m *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, m *discordgo.MessageCreate) {

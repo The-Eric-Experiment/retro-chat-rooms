@@ -2,34 +2,34 @@ package routes
 
 import (
 	"net/http"
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func PostLogout(c *gin.Context, session sessions.Session) {
-	id := c.PostForm("id")
-
-	room := chatroom.FindRoomByID(id)
-
-	if room == nil {
+	roomId := c.Param("id")
+	room, found := chat.GetSingleRoom(roomId)
+	if !found {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	user := room.GetUser(c)
+	userId := session.Get("userId")
+	combinedId := chat.GetCombinedId(roomId, userId.(string))
+	user, found := chat.GetUser(combinedId)
 
-	if user == nil {
+	if !found {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	if user.IsAdmin && user.IsDiscordUser {
+	if user.IsAdmin && user.IsDiscordUser() {
 		session.Set("userId", nil)
 		session.Save()
 	} else {
-		room.DeregisterUser(user)
+		chat.DeregisterUser(combinedId)
 	}
 
 	// TODO: This shouldn't happen here

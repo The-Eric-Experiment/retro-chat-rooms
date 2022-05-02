@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"retro-chat-rooms/chatroom"
+	"log"
+	"retro-chat-rooms/chat"
 	"retro-chat-rooms/discord"
 	"retro-chat-rooms/profanity"
 	"retro-chat-rooms/routes"
@@ -25,9 +26,11 @@ func routeWithSession(fn func(ctx *gin.Context, session sessions.Session)) func(
 func main() {
 	profanity.LoadProfanityFilters()
 
+	chat.InitializeRooms()
+
 	// Background Tasks
-	go tasks.CheckUserStatus(chatroom.CHAT_ROOMS)
-	go tasks.ObserveMessagesForDiscord()
+	go tasks.CheckUserStatus()
+	go tasks.ObserveMessagesToDiscord()
 
 	router := gin.Default()
 
@@ -48,18 +51,18 @@ func main() {
 	router.POST("/admin-login", routeWithSession(routes.PostAdminLogin))
 
 	// Main chat Screen
-	router.GET("/room/:id", routes.GetRoom)
+	router.GET("/room/:id", routeWithSession(routes.GetRoom))
 	router.GET("/chat-header/:id", routes.GetChatHeader)
-	router.GET("/chat-thread/:id", routes.GetChatThread)
+	router.GET("/chat-thread/:id", routeWithSession(routes.GetChatThread))
 	router.GET("/chat-updater/:id", routeWithSession(routes.GetChatUpdater))
-	router.GET("/chat-talk/:id", routes.GetChatTalk)
+	router.GET("/chat-talk/:id", routeWithSession(routes.GetChatTalk))
 	router.POST("/chat-talk/:id", routeWithSession(routes.PostChatTalk))
-	router.GET("/chat-users/:id", routes.GetChatUsers)
+	router.GET("/chat-users/:id", routeWithSession(routes.GetChatUsers))
 
 	discord.Instance.Connect()
-	discord.Instance.OnReceiveMessage(routes.ReceiveDiscordMessage)
+	discord.Instance.OnReceiveMessage(tasks.OnReceiveDiscordMessage)
 
-	router.Run()
+	log.Panicln(router.Run())
 	fmt.Println("closing...")
 	discord.Instance.Close()
 }

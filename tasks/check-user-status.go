@@ -1,20 +1,19 @@
 package tasks
 
 import (
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 	"time"
 )
 
-func CheckUserStatus(rooms []*chatroom.Room) {
+func CheckUserStatus() {
 	for {
-		for _, room := range rooms {
-			// Check if there are expired users
-			for _, user := range room.Users {
-				if !user.IsDiscordUser && time.Now().UTC().Sub(user.LastPing).Seconds() > chatroom.USER_LOGOUT_TIMEOUT {
-					room.DeregisterUser(user)
-				}
+		users := chat.GetAllUsers()
+		for _, user := range users {
+			if user.DiscordId == "" && chat.IsUserStale(user.ID) {
+				chat.DeregisterUser(user.ID)
 			}
 		}
+
 		time.Sleep(20000 * time.Millisecond)
 	}
 }

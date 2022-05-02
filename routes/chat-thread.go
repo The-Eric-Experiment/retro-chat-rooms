@@ -2,33 +2,27 @@ package routes
 
 import (
 	"net/http"
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-func GetChatThread(c *gin.Context) {
-	id := c.Param("id")
+func GetChatThread(c *gin.Context, session sessions.Session) {
+	roomId := c.Param("id")
 
-	room := chatroom.FindRoomByID(id)
+	userId := session.Get("userId")
+	combinedId := chat.GetCombinedId(roomId, userId.(string))
 
-	if room == nil {
-		c.Status(http.StatusNotFound)
-		return
-	}
+	messages, found := chat.GetUserMessageList(combinedId)
 
-	user := room.GetUser(c)
-
-	if user == nil {
+	if !found {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
 	c.HTML(http.StatusOK, "chat-thread.html", gin.H{
-		"ID":       room.ID,
-		"Name":     room.Name,
-		"Color":    room.Color,
-		"UserID":   user.ID,
-		"Messages": room.Messages,
+		"UserID":   combinedId,
+		"Messages": messages,
 	})
 }

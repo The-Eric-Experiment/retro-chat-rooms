@@ -4,7 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"net/http"
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 	"retro-chat-rooms/config"
 	"strings"
 
@@ -15,7 +15,7 @@ import (
 
 func GetAdminLogin(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin-login.html", gin.H{
-		"Rooms": chatroom.CHAT_ROOMS,
+		"Rooms": chat.GetAllRooms(),
 	})
 }
 
@@ -25,9 +25,9 @@ func PostAdminLogin(c *gin.Context, session sessions.Session) {
 	roomId := c.PostForm("r")
 	captcha := c.PostForm("mess")
 
-	room := chatroom.FindRoomByID(roomId)
+	room, found := chat.GetSingleRoom(roomId)
 
-	if room == nil {
+	if !found {
 		c.Redirect(http.StatusFound, BustCache("/"))
 		return
 	}
@@ -46,18 +46,19 @@ func PostAdminLogin(c *gin.Context, session sessions.Session) {
 
 	if !isOwnerVariation || ownerPassword != hash || captchaInvalid {
 		c.HTML(http.StatusForbidden, "admin-login.html", gin.H{
-			"Rooms": chatroom.CHAT_ROOMS,
+			"Rooms": chat.GetAllRooms(),
 		})
 		return
 	}
 
-	user := room.RegisterOwner(false)
+	registeredUserId := chat.RegisterAdmin(roomId)
 
 	userId := session.Get("userId")
+	combinedId := chat.GetCombinedId(roomId, userId.(string))
 
-	if userId == nil || userId != user.ID {
-		userId = uuid.NewString()
-		session.Set("userId", user.ID)
+	if userId == nil || combinedId != registeredUserId {
+		combinedId = uuid.NewString()
+		session.Set("userId", config.Current.OwnerChatUser.Id)
 		session.Save()
 	}
 

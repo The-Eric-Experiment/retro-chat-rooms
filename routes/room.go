@@ -2,25 +2,26 @@ package routes
 
 import (
 	"net/http"
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 	"retro-chat-rooms/config"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-func GetRoom(c *gin.Context) {
-	id := c.Param("id")
-
-	room := chatroom.FindRoomByID(id)
-
-	if room == nil {
+func GetRoom(c *gin.Context, session sessions.Session) {
+	roomId := c.Param("id")
+	room, found := chat.GetSingleRoom(roomId)
+	if !found {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	user := room.GetUser(c)
+	userId := session.Get("userId")
+	combinedId := chat.GetCombinedId(roomId, userId.(string))
+	_, found = chat.GetUser(combinedId)
 
-	if user == nil {
+	if !found {
 		c.Redirect(301, UrlJoin(room.ID))
 		return
 	}

@@ -1,10 +1,8 @@
-package chatroom
-
-var CHAT_ROOMS = FromConfig()
+package chat
 
 const (
 	MAX_MESSAGES                      = 200
-	USER_LOGOUT_TIMEOUT               = 120
+	USER_STALE_TIMEOUT                = 120
 	USER_MAX_MESSAGE_RATE_SEC         = 60
 	USER_MIN_MESSAGE_RATE_SEC         = 2
 	USER_SCREAM_TIMEOUT_MIN   float64 = 2

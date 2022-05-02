@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"retro-chat-rooms/chatroom"
+	"retro-chat-rooms/chat"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/floodcontrol"
 	"retro-chat-rooms/profanity"
@@ -42,20 +42,11 @@ func supportsChatEventAwaiter(c *gin.Context) bool {
 	return true
 }
 
-func getJoinData(c *gin.Context, room *chatroom.Room, errors []string) *gin.H {
-	if room == nil {
-		id := c.Param("id")
-		room = chatroom.FindRoomByID(id)
-	}
-
-	if room == nil {
-		return nil
-	}
-
+func getJoinData(room chat.ChatRoom, errors []string) *gin.H {
 	return &gin.H{
 		"CaptchaBuster": uuid.NewString(),
 		"Errors":        errors,
-		"Colors":        chatroom.NICKNAME_COLORS,
+		"Colors":        chat.NICKNAME_COLORS,
 		"Color":         room.Color,
 		"TextColor":     room.TextColor,
 		"Description":   room.Description,
@@ -73,24 +64,25 @@ func isNickVariation(input string, against string) bool {
 }
 
 func GetJoin(c *gin.Context) {
-	data := getJoinData(c, nil, make([]string, 0))
-	if data == nil {
+	roomId := c.Param("id")
+	room, found := chat.GetSingleRoom(roomId)
+	if !found {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	c.HTML(http.StatusOK, "join.html", data)
+	c.HTML(http.StatusOK, "join.html", getJoinData(room, make([]string, 0)))
 }
 
 func PostJoin(c *gin.Context, session sessions.Session) {
-	id := c.Param("id")
+	roomId := c.Param("id")
 	nickname := c.PostForm("ni")
 	color := c.PostForm("co")
 	captcha := c.PostForm("chap")
 
-	room := chatroom.FindRoomByID(id)
+	room, found := chat.GetSingleRoom(roomId)
 
-	if room == nil {
+	if !found {
 		c.Redirect(http.StatusFound, BustCache("/"))
 		return
 	}
@@ -131,7 +123,14 @@ func PostJoin(c *gin.Context, session sessions.Session) {
 
 	// YUCK THESE IFS
 	if len(errors) == 0 {
-		_, err := room.RegisterUser(userId.(string), nickname, color)
+		_, err := chat.RegisterUser(chat.ChatUser{
+			RoomId:    roomId,
+			ID:        chat.GetCombinedId(roomId, userId.(string)),
+			Nickname:  nickname,
+			Color:     color,
+			DiscordId: "",
+			IsAdmin:   false,
+		})
 		if err != nil && err.Error() == "user exists" {
 			errors = append(errors, "Someone is already using this Nickname, try a different one.")
 		} else if err != nil {
@@ -140,7 +139,7 @@ func PostJoin(c *gin.Context, session sessions.Session) {
 	}
 
 	if len(errors) > 0 {
-		data := getJoinData(c, room, errors)
+		data := getJoinData(room, errors)
 		c.HTML(http.StatusOK, "join.html", data)
 		return
 	}
