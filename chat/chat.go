@@ -142,7 +142,7 @@ func InitializeRooms() {
 		RoomMessageEvents[room.ID] = pubsub.NewPubsub()
 		RoomListEvents[room.ID] = pubsub.NewPubsub()
 
-		if config.Current.OwnerChatUser.DiscordId != "" {
+		if config.Current.OwnerChatUser.DiscordId != "" && room.DiscordChannel != "" {
 			RegisterAdmin(room.ID)
 		}
 	}
