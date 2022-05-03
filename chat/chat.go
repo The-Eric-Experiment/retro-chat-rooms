@@ -256,13 +256,14 @@ func RegisterUser(user ChatUser) (string, error) {
 
 	if user.DiscordId == "" {
 		SendMessage(user.RoomId, &ChatMessage{
-			Time:            time.Now().UTC(),
-			Message:         "{nickname} has joined the room!",
-			IsSystemMessage: true,
-			Privately:       false,
-			SpeechMode:      SPEECH_MODES[0].Value,
-			From:            user.ID,
-			To:              "",
+			Time:                 time.Now().UTC(),
+			Message:              "{nickname} has joined the room!",
+			IsSystemMessage:      true,
+			SystemMessageSubject: user,
+			Privately:            false,
+			SpeechMode:           SPEECH_MODES[0].Value,
+			From:                 user.ID,
+			To:                   "",
 		})
 
 		RoomListEvents[user.RoomId].Publish(true)
@@ -276,13 +277,14 @@ func DeregisterUser(combinedId string) {
 
 	if user.ID != "" && user.DiscordId == "" {
 		SendMessage(user.RoomId, &ChatMessage{
-			Time:            time.Now().UTC(),
-			Message:         "{nickname} has left the room!",
-			IsSystemMessage: true,
-			Privately:       false,
-			SpeechMode:      SPEECH_MODES[0].Value,
-			From:            user.ID,
-			To:              "",
+			Time:                 time.Now().UTC(),
+			Message:              "{nickname} has left the room!",
+			IsSystemMessage:      true,
+			SystemMessageSubject: user,
+			Privately:            false,
+			SpeechMode:           SPEECH_MODES[0].Value,
+			From:                 user.ID,
+			To:                   "",
 		})
 
 		RoomListEvents[user.RoomId].Publish(true)

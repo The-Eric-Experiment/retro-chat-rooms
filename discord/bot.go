@@ -15,6 +15,7 @@ func formatMessageForDiscord(m *chat.ChatMessage) string {
 	message := "**" + from.Nickname + "** "
 
 	if m.IsSystemMessage {
+		message = "**" + m.SystemMessageSubject.Nickname + "** "
 		return strings.Replace(m.Message, "{nickname}", message, -1)
 	}
 

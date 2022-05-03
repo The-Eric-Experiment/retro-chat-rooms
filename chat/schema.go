@@ -30,14 +30,15 @@ type ChatRoom struct {
 }
 
 type ChatMessage struct {
-	Time            time.Time
-	Message         string
-	From            string
-	To              string
-	Privately       bool
-	SpeechMode      string
-	IsSystemMessage bool
-	FromDiscord     bool
+	Time                 time.Time
+	Message              string
+	From                 string
+	To                   string
+	Privately            bool
+	SpeechMode           string
+	IsSystemMessage      bool
+	SystemMessageSubject ChatUser
+	FromDiscord          bool
 }
 
 type ChatUser struct {
