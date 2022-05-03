@@ -1,0 +1,18 @@
+<html>
+
+<head>
+    <meta http-equiv="PRAGMA" content="NO-CACHE" />
+    <title>Logout</title>
+</head>
+
+<body bgcolor="#EEEEEE">
+    Logout...
+    {{if not .SupportsEventAwaiter}}
+    <script>
+        debugger;
+        parent.updater.location = "{{ .ID | urlChatUpdater}}";
+    </script>
+    {{end}}
+</body>
+
+</html>

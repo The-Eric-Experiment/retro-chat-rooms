@@ -10,40 +10,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func unsub(roomId string, userId string) {
-	chat.RoomListEvents[roomId].Unsubscribe(userId)
-	chat.RoomMessageEvents[roomId].Unsubscribe(userId)
+func unsub(roomId string, combinedId string) {
+	chat.RoomListEvents[roomId].Unsubscribe(combinedId)
+	chat.RoomMessageEvents[roomId].Unsubscribe(combinedId)
 }
 
-func waitForChatEvent(roomId string, userId string, cb func(userListEvent bool, userList bool)) {
-	unsub(roomId, userId)
+func waitForChatEvent(roomId string, combinedId string, cb func(userListEvent bool, userList bool)) {
+	unsub(roomId, combinedId)
 	select {
-	case <-chat.RoomMessageEvents[roomId].Subscribe(userId):
-		unsub(roomId, userId)
+	case <-chat.RoomMessageEvents[roomId].Subscribe(combinedId):
+		unsub(roomId, combinedId)
 		cb(true, false)
 		break
-	case <-chat.RoomListEvents[roomId].Subscribe(userId):
-		unsub(roomId, userId)
+	case <-chat.RoomListEvents[roomId].Subscribe(combinedId):
+		unsub(roomId, combinedId)
 		cb(false, true)
 		break
 	case <-time.After(chat.UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
-		unsub(roomId, userId)
+		unsub(roomId, combinedId)
 		cb(false, false)
 		break
 	}
 }
 
-func getData(room chat.ChatRoom, userId string, hasMessages bool, userListUpdated bool, supportsAwaiter bool) gin.H {
-	_, found := chat.GetUser(userId)
+func getData(room chat.ChatRoom, combinedId string, hasMessages bool, userListUpdated bool, supportsAwaiter bool) (gin.H, bool) {
+	_, found := chat.GetUser(combinedId)
 
 	if !found {
 		return gin.H{
 			"UserGone": true,
 			"ID":       room.ID,
-		}
+		}, true
 	}
 
-	chat.Ping(userId)
+	chat.Ping(combinedId)
 
 	return gin.H{
 		"ID":                       room.ID,
@@ -51,7 +51,7 @@ func getData(room chat.ChatRoom, userId string, hasMessages bool, userListUpdate
 		"UserListUpdated":          userListUpdated,
 		"Color":                    room.Color,
 		"SupportsChatEventAwaiter": supportsAwaiter,
-	}
+	}, !supportsAwaiter || hasMessages || userListUpdated
 }
 
 func GetChatUpdater(c *gin.Context, session sessions.Session) {
@@ -75,7 +75,9 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 
 		chat.DeregisterUser(combinedId)
 
-		c.HTML(http.StatusOK, "chat-updater.html", getData(room, combinedId, false, false, false))
+		data, _ := getData(room, combinedId, false, false, false)
+
+		c.HTML(http.StatusOK, "chat-updater.html", data)
 		return
 	}
 
@@ -85,12 +87,13 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 		supportsChatEventAwaiter = true
 	}
 
-	if !supportsChatEventAwaiter.(bool) {
-		hasMessages := chat.UserHasMessages(combinedId)
-		userListUpdated := chat.HasUserListChanged(combinedId)
+	hasMessages := chat.UserHasMessages(combinedId)
+	userListUpdated := chat.HasUserListChanged(combinedId)
 
-		data := getData(room, combinedId, hasMessages, userListUpdated, supportsChatEventAwaiter.(bool))
+	data, updated := getData(room, combinedId, hasMessages, userListUpdated, supportsChatEventAwaiter.(bool))
 
+	// If it has changes, return straight away.
+	if updated {
 		c.HTML(http.StatusOK, "chat-updater.html", data)
 		return
 	}
@@ -98,7 +101,8 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 	result := make(chan gin.H)
 
 	go waitForChatEvent(roomId, combinedId, func(hasMessages bool, userListUpdated bool) {
-		result <- getData(room, combinedId, hasMessages, userListUpdated, supportsChatEventAwaiter.(bool))
+		data, _ := getData(room, combinedId, hasMessages, userListUpdated, supportsChatEventAwaiter.(bool))
+		result <- data
 	})
 
 	c.HTML(http.StatusOK, "chat-updater.html", <-result)

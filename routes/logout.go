@@ -9,12 +9,7 @@ import (
 )
 
 func PostLogout(c *gin.Context, session sessions.Session) {
-	roomId := c.Param("id")
-	room, found := chat.GetSingleRoom(roomId)
-	if !found {
-		c.Status(http.StatusNotFound)
-		return
-	}
+	roomId := c.PostForm("id")
 
 	userId := session.Get("userId")
 	combinedId := chat.GetCombinedId(roomId, userId.(string))
@@ -32,6 +27,14 @@ func PostLogout(c *gin.Context, session sessions.Session) {
 		chat.DeregisterUser(combinedId)
 	}
 
-	// TODO: This shouldn't happen here
-	c.Redirect(301, UrlChatUpdater(room.ID))
+	suportsChatEventAwaiter := session.Get("supportsChatEventAwaiter")
+
+	if suportsChatEventAwaiter == nil {
+		suportsChatEventAwaiter = true
+	}
+
+	c.HTML(http.StatusOK, "logout.html", gin.H{
+		"SupportsEventAwaiter": suportsChatEventAwaiter,
+		"ID":                   roomId,
+	})
 }

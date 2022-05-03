@@ -18,6 +18,11 @@ func GetRoom(c *gin.Context, session sessions.Session) {
 	}
 
 	userId := session.Get("userId")
+
+	if userId == nil {
+		c.Redirect(301, UrlJoin(roomId))
+	}
+
 	combinedId := chat.GetCombinedId(roomId, userId.(string))
 	_, found = chat.GetUser(combinedId)
 
