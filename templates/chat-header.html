@@ -14,8 +14,23 @@
           <font face="Ms Sans Serif,Arial,Times New Roman" size="4" color="{{ .TextColor }}">{{ .Name }}</font>
         </strong>
       </td>
+      <td valign="center">
+        <form name="roomsettings">
+          <input type="checkbox" name="isautoscroll" id="isautoscroll" checked /><label for="isautoscroll">
+            <font face="Ms Sans Serif,Arial,Times New Roman" size="-1" color="{{ .TextColor }}">Enable
+              auto-scrolling</font>
+          </label>
+        </form>
+      </td>
     </tr>
   </table>
+  <script language="javascript">
+    function isAutoScrollEnabled() {
+      return window.document.roomsettings.isautoscroll.checked;
+    }
+
+    window.isAutoScrollEnabled = isAutoScrollEnabled;
+  </script>
 </body>
 
 </html>

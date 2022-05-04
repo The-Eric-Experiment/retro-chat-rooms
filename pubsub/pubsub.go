@@ -32,7 +32,15 @@ func NewPubsub() Pubsub {
 
 // Subscribe subscribes to pubsub
 func (p *pubsub) Subscribe(id string) chan interface{} {
-	c := make(chan interface{})
+	p.m.Lock()
+	c, f := p.subscribers[id]
+	p.m.Unlock()
+
+	if f {
+		return c
+	}
+
+	c = make(chan interface{})
 
 	p.m.Lock()
 	p.subscribers[id] = c

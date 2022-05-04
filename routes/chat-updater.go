@@ -10,20 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func unsub(roomId string, combinedId string) {
-	chat.RoomEvents[roomId].Unsubscribe(combinedId)
-}
-
 func waitForChatEvent(roomId string, combinedId string, cb func(messageUpdates bool, userListUpdates bool)) {
-	unsub(roomId, combinedId)
 	select {
 	case val := <-chat.RoomEvents[roomId].Subscribe(combinedId):
-		unsub(roomId, combinedId)
 		data := val.(chat.ChatEvent)
 		cb(data.Message != nil, data.IsUserListUpdate)
 		break
 	case <-time.After(chat.UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
-		unsub(roomId, combinedId)
 		cb(false, false)
 		break
 	}

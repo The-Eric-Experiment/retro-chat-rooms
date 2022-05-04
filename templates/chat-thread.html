@@ -1,13 +1,28 @@
 <html>
+
 <head>
   <meta http-equiv="PRAGMA" content="NO-CACHE" />
   <title>Chat window</title>
 </head>
+
 <body bgcolor="#EEEEEE">
   {{$userId := .UserID}}
   {{range $i, $m := .Messages }}
-    {{renderMessage $userId $m}}
-    <br>
+  {{renderMessage $userId $m}}
+  <br>
   {{end}}
+
+  <script language="javascript">
+    if (!parent.header.isAutoScrollEnabled || parent.header.isAutoScrollEnabled()) {
+      if (window.scrollTo) {
+        window.scrollTo(0, 100000);
+      }
+
+      if (window.scroll) {
+        window.scroll(0, 100000);
+      }
+    }
+  </script>
 </body>
+
 </html>
