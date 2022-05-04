@@ -13,8 +13,8 @@ import (
 func observeRoomMessages(roomId string, events pubsub.Pubsub) {
 	c := events.Subscribe("discord-bot")
 	for message := range c {
-		msg := message.(*chat.ChatMessage)
-		if !msg.FromDiscord {
+		msg := message.(chat.ChatEvent).Message
+		if msg != nil && !msg.FromDiscord {
 			room, _ := chat.GetSingleRoom(roomId)
 			if room.DiscordChannel != "" {
 				discord.Instance.SendMessage(room.DiscordChannel, msg)
@@ -24,7 +24,7 @@ func observeRoomMessages(roomId string, events pubsub.Pubsub) {
 }
 
 func ObserveMessagesToDiscord() {
-	for roomId, events := range chat.RoomMessageEvents {
+	for roomId, events := range chat.RoomEvents {
 		go observeRoomMessages(roomId, events)
 	}
 }

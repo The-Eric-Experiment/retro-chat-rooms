@@ -11,20 +11,16 @@ import (
 )
 
 func unsub(roomId string, combinedId string) {
-	chat.RoomListEvents[roomId].Unsubscribe(combinedId)
-	chat.RoomMessageEvents[roomId].Unsubscribe(combinedId)
+	chat.RoomEvents[roomId].Unsubscribe(combinedId)
 }
 
-func waitForChatEvent(roomId string, combinedId string, cb func(userListEvent bool, userList bool)) {
+func waitForChatEvent(roomId string, combinedId string, cb func(messageUpdates bool, userListUpdates bool)) {
 	unsub(roomId, combinedId)
 	select {
-	case <-chat.RoomMessageEvents[roomId].Subscribe(combinedId):
+	case val := <-chat.RoomEvents[roomId].Subscribe(combinedId):
 		unsub(roomId, combinedId)
-		cb(true, false)
-		break
-	case <-chat.RoomListEvents[roomId].Subscribe(combinedId):
-		unsub(roomId, combinedId)
-		cb(false, true)
+		data := val.(chat.ChatEvent)
+		cb(data.Message != nil, data.IsUserListUpdate)
 		break
 	case <-time.After(chat.UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
 		unsub(roomId, combinedId)

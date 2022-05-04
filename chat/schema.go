@@ -57,3 +57,8 @@ func (user ChatUser) IsDiscordUser() bool {
 type UserListUpdatedEvent struct {
 	RoomId string
 }
+
+type ChatEvent struct {
+	Message          *ChatMessage
+	IsUserListUpdate bool
+}

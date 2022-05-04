@@ -3,6 +3,7 @@ package chat
 import (
 	"errors"
 	"retro-chat-rooms/config"
+	"retro-chat-rooms/helpers"
 	"retro-chat-rooms/pubsub"
 	"strings"
 	"sync"
@@ -30,8 +31,7 @@ var (
 	roomLastUserListChange map[string]time.Time = make(map[string]time.Time)
 	userPings              map[string]time.Time = make(map[string]time.Time)
 
-	RoomMessageEvents map[string]pubsub.Pubsub = make(map[string]pubsub.Pubsub)
-	RoomListEvents    map[string]pubsub.Pubsub = make(map[string]pubsub.Pubsub)
+	RoomEvents map[string]pubsub.Pubsub = make(map[string]pubsub.Pubsub)
 
 	mutex = sync.Mutex{}
 )
@@ -49,6 +49,13 @@ func determineTextColor(color string) string {
 	}
 
 	return "#FFFFFF"
+}
+
+func userListUpdated(roomId string) {
+	defer mutex.Unlock()
+	mutex.Lock()
+	roomLastUserListChange[roomId] = helpers.Now()
+	RoomEvents[roomId].Publish(ChatEvent{IsUserListUpdate: true})
 }
 
 func instantiateUser(user ChatUser) error {
@@ -139,8 +146,7 @@ func InitializeRooms() {
 		rooms[room.ID] = room
 		roomUsers[room.ID] = make([]string, 0)
 		roomLastUserListChange[room.ID] = time.Now().UTC()
-		RoomMessageEvents[room.ID] = pubsub.NewPubsub()
-		RoomListEvents[room.ID] = pubsub.NewPubsub()
+		RoomEvents[room.ID] = pubsub.NewPubsub()
 
 		if config.Current.OwnerChatUser.DiscordId != "" && room.DiscordChannel != "" {
 			RegisterAdmin(room.ID)
@@ -266,7 +272,7 @@ func RegisterUser(user ChatUser) (string, error) {
 			To:                   "",
 		})
 
-		RoomListEvents[user.RoomId].Publish(true)
+		userListUpdated(user.RoomId)
 	}
 
 	return user.ID, nil
@@ -287,7 +293,7 @@ func DeregisterUser(combinedId string) {
 			To:                   "",
 		})
 
-		RoomListEvents[user.RoomId].Publish(true)
+		userListUpdated(user.RoomId)
 	}
 }
 
@@ -303,7 +309,7 @@ func SendMessage(roomId string, message *ChatMessage) {
 		userMessages[combinedId] = append(userMessages[combinedId], message)
 	}
 
-	RoomMessageEvents[roomId].Publish(message)
+	RoomEvents[roomId].Publish(ChatEvent{Message: message})
 }
 
 func Ping(combinedId string) {
