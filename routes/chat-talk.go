@@ -44,7 +44,7 @@ func checkForMessageAbuse(room chat.ChatRoom, user chat.ChatUser) bool {
 	return true
 }
 
-func sendHtml(c *gin.Context, room chat.ChatRoom, user chat.ChatUser, toUserId string, updateUpdater bool) {
+func sendHtml(c *gin.Context, room chat.ChatRoom, user chat.ChatUser, toUserId string, updateUpdater bool, private bool) {
 	var to chat.ChatUser
 	if toUserId != "" {
 		toUser, fnd := chat.GetUser(toUserId)
@@ -62,6 +62,7 @@ func sendHtml(c *gin.Context, room chat.ChatRoom, user chat.ChatUser, toUserId s
 		"TextColor":     room.TextColor,
 		"SpeechModes":   chat.SPEECH_MODES,
 		"UpdateUpdater": updateUpdater,
+		"Private":       private,
 	})
 }
 
@@ -86,7 +87,7 @@ func GetChatTalk(c *gin.Context, session sessions.Session) {
 		return
 	}
 
-	sendHtml(c, room, user, toUserId, false)
+	sendHtml(c, room, user, toUserId, false, false)
 }
 
 func PostChatTalk(c *gin.Context, session sessions.Session) {
@@ -115,7 +116,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 	}
 
 	if len(strings.TrimSpace(message)) == 0 {
-		sendHtml(c, room, user, toUserId, false)
+		sendHtml(c, room, user, toUserId, false, private == "on")
 		return
 	}
 
@@ -132,7 +133,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 	}
 
 	if floodcontrol.IsIPBanned(c) {
-		sendHtml(c, room, user, toUserId, updateUpdater)
+		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
 		return
 	}
 
@@ -150,7 +151,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 
 		session.Set("coolDownMessageSent", true)
 		session.Save()
-		sendHtml(c, room, user, toUserId, updateUpdater)
+		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
 		return
 	}
 
@@ -169,7 +170,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 			SpeechMode:      chat.MODE_SAY_TO,
 		})
 
-		sendHtml(c, room, user, toUserId, updateUpdater)
+		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
 		return
 	}
 
@@ -189,7 +190,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 			SpeechMode:      chat.MODE_SAY_TO,
 		})
 
-		sendHtml(c, room, user, toUserId, updateUpdater)
+		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
 		return
 	}
 
@@ -208,5 +209,5 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		SpeechMode:      mode,
 	})
 
-	sendHtml(c, room, user, toUserId, updateUpdater)
+	sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
 }

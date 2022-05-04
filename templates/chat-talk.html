@@ -24,7 +24,7 @@
           <form name="talkform" action="{{urlChatTalk .ID ""}}" method="POST">
             <input type="hidden" name="id" value="{{ .ID }}" />
             <input type="hidden" name="userId" value="{{ .UserId }}" />
-            <input type="checkbox" name="private" id="private" /><label for="private">
+            <input type="checkbox" name="private" id="private" {{if .Private}} checked {{end}} /><label for="private">
               <font color="{{ .TextColor }}">Privately</font>
             </label>&nbsp;
             <select name="speechMode">
@@ -50,6 +50,9 @@
       </tr>
     </tbody>
   </table>
+  <script language="javascript">
+    document.talkform.message.focus();
+  </script>
 
   {{if .UpdateUpdater}}
   <script language="javascript">
