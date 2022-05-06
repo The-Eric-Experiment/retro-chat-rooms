@@ -3,6 +3,7 @@ package profanity
 import (
 	"bufio"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/samber/lo"
@@ -68,13 +69,11 @@ func ReplaceSensoredProfanity(input string) string {
 }
 
 func HasBlockedWords(input string) bool {
-	words := strings.Split(input, " ")
 
-	for _, word := range words {
-		if word == "" {
-			continue
-		}
-		if lo.Contains(blocked, strings.ToLower(word)) {
+	for _, b := range blocked {
+		blockedRegex := regexp.MustCompile(`(?i)(^|[^a-zA-Z])` + b + `($|[^a-zA-Z])`)
+
+		if blockedRegex.MatchString(input) {
 			return true
 		}
 	}

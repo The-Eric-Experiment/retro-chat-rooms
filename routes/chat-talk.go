@@ -161,7 +161,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 	// Check if there's slurs
 
 	if profanity.HasBlockedWords(message) {
-		chat.SendMessage(combinedId, &chat.ChatMessage{
+		chat.SendMessage(roomId, &chat.ChatMessage{
 			Time:            now,
 			To:              combinedId,
 			IsSystemMessage: true,
