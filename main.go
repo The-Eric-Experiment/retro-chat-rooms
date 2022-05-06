@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"retro-chat-rooms/api"
 	"retro-chat-rooms/chat"
 	"retro-chat-rooms/discord"
 	"retro-chat-rooms/profanity"
@@ -60,6 +61,12 @@ func main() {
 	router.GET("/chat-talk/:id", routeWithSession(routes.GetChatTalk))
 	router.POST("/chat-talk/:id", routeWithSession(routes.PostChatTalk))
 	router.GET("/chat-users/:id", routeWithSession(routes.GetChatUsers))
+
+	// API
+	group := router.Group("/api")
+	{
+		group.GET("/rooms", api.GetRooms)
+	}
 
 	log.Panicln(router.Run())
 	fmt.Println("closing...")

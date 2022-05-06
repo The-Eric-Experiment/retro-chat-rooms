@@ -5,22 +5,31 @@
   <title></title>
 </head>
 
-<body bgcolor="{{ .Color }}" margin="0">
+<body bgcolor="{{ .Color }}" style="margin: 20px;">
   <table border="0" cellspacing="0" cellpadding="0" width="100%">
     <tr>
-      <td align="left">
+      <td align="left" width="50" nowrap>
         <img src="{{ .Logo }}" alt="Old'aVista Chat"><br />
-        <strong>
-          <font face="Ms Sans Serif,Arial,Times New Roman" size="4" color="{{ .TextColor }}">{{ .Name }}</font>
-        </strong>
       </td>
-      <td valign="center">
+      <td valign="center" align="left" rowspan="2">
+        <strong>
+          <font face="Ms Sans Serif,Arial,Times New Roman" size="3" color="{{ .TextColor }}">
+            Room Settings
+          </font>
+        </strong>
         <form name="roomsettings">
           <input type="checkbox" name="isautoscroll" id="isautoscroll" checked /><label for="isautoscroll">
             <font face="Ms Sans Serif,Arial,Times New Roman" size="-1" color="{{ .TextColor }}">Enable
               auto-scrolling</font>
           </label>
         </form>
+      </td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;">
+        <strong>
+          <font face="Ms Sans Serif,Arial,Times New Roman" size="4" color="{{ .TextColor }}">{{ .Name }}</font>
+        </strong>
       </td>
     </tr>
   </table>

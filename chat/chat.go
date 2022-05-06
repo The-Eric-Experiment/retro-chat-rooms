@@ -18,6 +18,10 @@ var (
 	// List of rooms available
 	rooms map[string]ChatRoom = make(map[string]ChatRoom)
 
+	// This is the ordered list of room ids,
+	// used to return the room list in order.
+	roomKeys []string = make([]string, 0)
+
 	// Key/Value list of all users
 	users map[string]ChatUser = make(map[string]ChatUser)
 
@@ -143,6 +147,7 @@ func InitializeRooms() {
 			LastUserListUpdate: time.Now().UTC(),
 			TextColor:          determineTextColor(cr.Color),
 		}
+		roomKeys = append(roomKeys, cr.ID)
 		rooms[room.ID] = room
 		roomUsers[room.ID] = make([]string, 0)
 		roomLastUserListChange[room.ID] = time.Now().UTC()
@@ -157,8 +162,7 @@ func InitializeRooms() {
 func GetAllRooms() []ChatRoom {
 	defer mutex.Unlock()
 	mutex.Lock()
-	keys := lo.Keys(rooms)
-	return lo.Map(keys, func(key string, _ int) ChatRoom {
+	return lo.Map(roomKeys, func(key string, _ int) ChatRoom {
 		return rooms[key]
 	})
 }
