@@ -1,46 +1,72 @@
 {{ define "browser-support" }}
 
-<table border="0" callspacing="0" cellpadding="2" width="100%">
+<table border="2" callspacing="2" cellpadding="2" width="100%">
+    <thead>
+        <tr>
+            <th>Browser</th>
+            <th colspan="4">Version/Support</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>Netscape</b></td>
+            <td bgcolor="#FF0000">~1</td>
+            <td bgcolor="#FFFF00">2**</td>
+            <td bgcolor="#00FF00">3+</td>
+        </tr>
+        <tr>
+            <td><b>Internet Explorer</b></td>
+            <td bgcolor="#FF0000">~2</td>
+            <td bgcolor="#FFFF00">3<strong>*</strong></td>
+            <td bgcolor="#00FF00">4+</td>
+        </tr>
+        <tr>
+            <td><b>Opera</b></td>
+            <td bgcolor="#FF0000">2.12</td>
+            <td bgcolor="#00FF00">3~4<strong>*</strong></td>
+            <td bgcolor="#00FF00">5+</td>
+        </tr>
+        <tr>
+            <td><b>PlanetWeb for Dreamcast</b></td>
+            <td bgcolor="#FF0000">3.0</td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <td><b>K-Meleon</b></td>
+            <td bgcolor="#00FF00">0.6</td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <td><b>Chrome</b></td>
+            <td bgcolor="#00FF00">all</td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <td><b>Firefox</b></td>
+            <td bgcolor="#00FF00">all</td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <td><b>Edge</b></td>
+            <td bgcolor="#00FF00">all</td>
+            <td colspan="2"></td>
+        </tr>
+    </tbody>
+</table>
+<font size="-1">
+    * It uses a polling mechanism istead of keep-alive as the update method
+    <br>** Currently a work in progress
+    <br>*** Browsers not listed above haven't been tested.<br>
+</font>
+<table border="2" callspacing="2" cellpadding="2" width="100%">
     <tr>
-        <td><b>Full support</b></td>
-        <td><b>Partial support</b></td>
+        <th colspan="3">Scale</th>
     </tr>
     <tr>
-        <td valign="top">
-            <ul>
-                <li>All modern Browsers</li>
-                <li>Netscape 3+</li>
-                <li>K-Meleon 0.6</li>
-                <li>Opera 4+</li>
-                <li>Internet Explorer 3+</li>
-            </ul>
-        </td>
-        <td valign="top">
-            <ul>
-                <li>Opera 3</li>
-            </ul>
-        </td>
-    </tr>
-    <tr>
-        <td><b>Work in Progress</b></td>
-        <td><b>Unsupported</b></td>
-    </tr>
-    <tr>
-        <td valign="top">
-            <ul>
-                <li>Netscape 2</li>
-            </ul>
-        </td>
-        <td valign="top">
-            <ul>
-                <li>Netscape&nbsp;<&nbsp;2 </li>
-                <li>Internet Explorer&nbsp;<=&nbsp;2 </li>
-                <li>PlanetWeb 3.0 for Dreamcast</li>
-                <li>Opera 2.12</li>
-            </ul>
-        </td>
+        <td bgcolor="#FF0000">Doesn't work</td>
+        <td bgcolor="#FFFF00">Partially working</td>
+        <td bgcolor="#00FF00">Fully Working</td>
     </tr>
 </table>
-<font size="-1">* Browsers not listed above haven't been tested.<br></font>
 <br><br>
 {{end}}
