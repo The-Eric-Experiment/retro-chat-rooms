@@ -6,45 +6,82 @@
 </head>
 
 <body bgcolor="{{ .Color }}">
+  <table cellspacing="0" cellpadding="2" border="0">
+    <tr>
+      <td>
+        <form action="{{ urlLogout }}" method="POST">
+          <table cellspacing="0" cellpadding="2" border="0">
+            <tr>
+              <td height="27" valign="center">
+                <font color="{{ .TextColor }}">
+                  <strong>{{ .Nickname }}</strong>
+                </font>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="hidden" name="id" value="{{ .ID }}" />
+                <input type="submit" name="exit" value="Exit" />
+              </td>
+            </tr>
+          </table>
+        </form>
+      </td>
+      <td>
+        <form name="talkform" action="{{urlChatTalk .ID ""}}" method="POST">
+          <input type="hidden" name="id" value="{{ .ID }}" />
+          <input type="hidden" name="userId" value="{{ .UserId }}" />
+          <table cellspacing="0" cellpadding="2" border="0">
+            <tr>
+              <td valign="middle">
+                <input type="checkbox" name="private" id="private" {{if .Private}} checked {{end}} /><label
+                  for="private">
+                  <font color="{{ .TextColor }}">Privately</font>
+                </label>&nbsp;&nbsp;
+                <select name="speechMode">
+                  {{ range $i, $m := .SpeechModes }}
+                  <option value="{{ $m.Value }}">{{ $m.Label }}</option>
+                  {{ end }}
+                </select>&nbsp;&nbsp;
+                {{if not (eq .To.ID "") }}
+                <input type="hidden" name="to" value="{{ .To.ID }}" />
+                <font color="{{ .TextColor }}">
+                  <strong>{{ .To.Nickname }}</strong>
+                </font>
+                {{else}}
+                <font color="{{ .TextColor }}">
+                  <strong>Everyone</strong>
+                </font>
+                {{end}}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="text" name="message" size="45" />
+                <input tabindex="1" type="submit" value="Send" />
+              </td>
+            </tr>
+          </table>
+        </form>
+      </td>
+    </tr>
+  </table>
+
   <table>
     <tbody>
       <tr>
         <td>
-          <font color="{{ .TextColor }}">
-            <strong>{{ .Nickname }}</strong>
-          </font>
-          <br />
-          <form action="{{ urlLogout }}" method="POST">
-            <input type="hidden" name="id" value="{{ .ID }}" />
-            <input type="submit" name="exit" value="Exit" />
-          </form>
-        </td>
+
         <td>
-          <!-- onSubmit="document.talkform.message.value=document.talkform.message2.value;document.talkform.message2.value='';" -->
-          <form name="talkform" action="{{urlChatTalk .ID ""}}" method="POST">
-            <input type="hidden" name="id" value="{{ .ID }}" />
-            <input type="hidden" name="userId" value="{{ .UserId }}" />
-            <input type="checkbox" name="private" id="private" {{if .Private}} checked {{end}} /><label for="private">
-              <font color="{{ .TextColor }}">Privately</font>
-            </label>&nbsp;
-            <select name="speechMode">
-              {{ range $i, $m := .SpeechModes }}
-              <option value="{{ $m.Value }}">{{ $m.Label }}</option>
-              {{ end }}
-            </select>&nbsp;
-            {{if not (eq .To.ID "") }}
-            <input type="hidden" name="to" value="{{ .To.ID }}" />
-            <font color="{{ .TextColor }}">
-              <strong>{{ .To.Nickname }}</strong>
-            </font>
-            {{else}}
-            <font color="{{ .TextColor }}">
-              <strong>Everyone</strong>
-            </font>
-            {{end}}
-            <br />
-            <input type="text" name="message" size="45" />
-            <input tabindex="1" type="submit" value="Send" />
+      </tr>
+      <tr>
+        <br />
+
+        </td>
+      </tr>
+      <tr>
+        <td>
+
           </form>
         </td>
       </tr>

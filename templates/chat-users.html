@@ -3,15 +3,10 @@
 <head>
   <meta http-equiv="PRAGMA" content="NO-CACHE" />
   <meta http-equiv="Expires" content="0" />
+  <title>Users Currently Online:</title>
 </head>
 
 <body bgcolor="#E4E4E4">
-  <html>
-
-  <head>
-    <title>Users Currently Online:</title>
-  </head>
-
   <table cellspacing="2" cellpadding="3" border="0" width="100%">
     <tr>
       <th align="left" bgcolor="#DDDDDD">Username</th>
@@ -34,22 +29,14 @@
     </tr>
     {{end}}
   </table>
-  <tr>
-    <td colspan="2">
-      <center>
-        {{.UsersOnline}}{{if eq .UsersOnline 1}} user {{else}} users {{end}}
-        currently online.<br />
-        Chatroom time: <br />
-        {{ .RoomTime | formatTime}}
-      </center>
-    </td>
-  </tr>
   <center>
+    {{.UsersOnline}}{{if eq .UsersOnline 1}} user {{else}} users {{end}}
+    currently online.<br />
+    Chatroom time: <br />
+    {{ .RoomTime | formatTime}}<br />
     <font size="-1"><a target="userlist" href="{{ .ID | urlChatUsers }}">[&nbsp;Update&nbsp;Who's&nbsp;Online&nbsp;]</a>
     </font>
   </center>
-
-  </html>
 </body>
 
 </html>

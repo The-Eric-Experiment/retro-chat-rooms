@@ -6,32 +6,33 @@
 </head>
 
 <body bgcolor="{{ .Color }}" style="margin: 20px;">
-  <table border="0" cellspacing="0" cellpadding="0" width="100%">
-    <tr>
-      <td align="left" width="50" nowrap>
-        <img src="{{ .Logo }}" alt="Old'aVista Chat"><br />
-      </td>
-      <td valign="center" align="left" rowspan="2">
-        <strong>
-          <font face="Ms Sans Serif,Arial,Times New Roman" size="3" color="{{ .TextColor }}">
-            Room Settings
-          </font>
-        </strong>
-        <form name="roomsettings">
+  <form name="roomsettings">
+    <table border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td align="left" nowrap>
+          <img src="{{ .Logo }}" alt="Old'aVista Chat"><br />
+        </td>
+        <td rowspan="2" width="20"></td>
+        <td valign="center" align="left" rowspan="2">
+          <strong>
+            <font face="Ms Sans Serif,Arial,Times New Roman" size="3" color="{{ .TextColor }}">
+              Room Settings
+            </font>
+          </strong><br>
           <input type="checkbox" name="isautoscroll" id="isautoscroll" checked /><label for="isautoscroll">
             <font face="Ms Sans Serif,Arial,Times New Roman" size="-1" color="{{ .TextColor }}">Enable
               auto-scrolling</font>
           </label>
-        </form>
-      </td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;">
-        <strong>
-          <font face="Ms Sans Serif,Arial,Times New Roman" size="4" color="{{ .TextColor }}">{{ .Name }}</font>
-        </strong>
-      </td>
-    </tr>
+        </td>
+      </tr>
+      <tr>
+        <td style="white-space: nowrap;" nowrap>
+          <strong>
+            <font face="Ms Sans Serif,Arial,Times New Roman" size="4" color="{{ .TextColor }}">{{ .Name }}</font>
+          </strong>
+        </td>
+      </tr>
+  </form>
   </table>
   <script language="javascript">
     function isAutoScrollEnabled() {
