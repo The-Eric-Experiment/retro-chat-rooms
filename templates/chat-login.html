@@ -1,87 +1,91 @@
 {{ define "chat-login" }}
 <form action="{{ .ID | urlJoin }}" method="post" name="formnick">
-  <table cellspacing="5" cellpadding="0" border="0">
-    <tr>
-      <td width="390" valign="top">
-        <table width="390" cellspacing="0" cellpadding="2" border="0">
-          <tr bgcolor="{{ .Color }}">
-            <td height="22" width="410" id="tit">
-              &nbsp;<font color="{{ .TextColor }}">
-                <strong>Security Verification and Nickname </strong>
-              </font>
-            </td>
-          </tr>
-        </table>
-        <table width="390" cellspacing="0" cellpadding="2" border="0">
-          {{ if (hasStrings .Errors) }}
-          <tr>
-            <td>
-              <font face="Verdana,Arial" size="-1">
-                <strong>We had issues registering you:</strong>
-              </font><br>
-              {{range $i, $err := .Errors}}
-              <br>
-              <font face="Verdana,Arial" size="-1" color="red">
-                <img src="/public/dart.gif">&nbsp;
-                {{ $err }}
-              </font>
-              {{end}}
-            </td>
-          </tr>
-          {{end}}
-          <tr>
-            <td valign="top"><br id="br5px" /></td>
-          </tr>
-        </table>
-        <table width="390" cellspacing="0" cellpadding="2" border="0">
-          <tr valign="top">
-            <td>
-              <b>Please sum the numbers in the input below:</b><br /><br />
-              <input type="text" name="chap" value="" cols="30" /><br />
-              <font size="1" face="Verdana,Arial">If you have difficulty solving it, please refresh the page to
-                get a new one.</font>
-            </td>
-            <td><img src="{{ urlCaptcha }}" alt="" width="220" height="122" /></td>
-          </tr>
-          <tr>
-            <td colspan="2" align="center" height="80">
-              <table border="0">
-                <tr>
-                  <td>
-                    <b>Enter a nickname:</b><br /><input type="text" name="ni" value="" cols="18" />
-                  </td>
-                  <td>&nbsp;</td>
-                  <td>
-                    <b>Nickname color:</b><br /><select name="co" class="select">
-                      {{range $i, $c := .Colors}}
-                      <option value="{{ $c.Color }}" style="color: {{ $c.Color }};" {{if eq $i 0}}selected{{end}}>
-                        {{$c.Name}}
-                      </option>
-                      {{end}}
-                    </select>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-        <table width="390" cellspacing="0" cellpadding="2" border="0">
-          <tr>
-            <td height="30" bgcolor="{{.Color}}" align="center">
-              <input type="submit" value="Join" style="width: 85px" class="input" />
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <font size="1" face="arial">Upon Joining the Chat Room, you agree with the&nbsp;<a href="#"
-                  style="color: red"><b>Terms of service</b></a></font>
-            </td>
-          </tr>
-        </table>
-      </td>
-      <td width="15" valign="top">&nbsp;</td>
-      <td width="200" bgcolor="#EEEEEE" valign="top"></td>
-    </tr>
-  </table>
+  <center>
+    <table cellspacing="5" cellpadding="0" border="0">
+      <tr>
+        <td width="390" valign="top">
+          <table width="390" cellspacing="0" cellpadding="2" border="0">
+            <tr bgcolor="{{ .Color }}">
+              <td height="22" width="410" id="tit">
+                &nbsp;<font color="{{ .TextColor }}" face="Verdana,Arial">
+                  <strong>Security Verification and Nickname </strong>
+                </font>
+              </td>
+            </tr>
+          </table>
+          <table width="390" cellspacing="0" cellpadding="2" border="0">
+            {{ if (hasStrings .Errors) }}
+            <tr>
+              <td>
+                <font face="Verdana,Arial" size="-1">
+                  <strong>We had issues registering you:</strong>
+                </font><br>
+                {{range $i, $err := .Errors}}
+                <br>
+                <font face="Verdana,Arial" size="-1" color="red">
+                  <img src="/public/dart.gif">&nbsp;
+                  {{ $err }}
+                </font>
+                {{end}}
+              </td>
+            </tr>
+            {{end}}
+            <tr>
+              <td valign="top"><br id="br5px" /></td>
+            </tr>
+          </table>
+          <table width="390" cellspacing="0" cellpadding="2" border="0">
+            <tr valign="top">
+              <td>
+                <b>
+                  <font face="Verdana,Arial" size="-1">Please sum the numbers in the input below:</font>
+                </b><br /><br />
+                <input type="text" name="chap" value="" cols="30" /><br />
+                <font size="1" face="Verdana,Arial">If you have difficulty solving it, please refresh the page to
+                  get a new one.</font>
+              </td>
+              <td><img src="{{ urlCaptcha }}" alt="" width="220" height="122" /></td>
+            </tr>
+            <tr>
+              <td colspan="2" align="center" height="80">
+                <table border="0">
+                  <tr>
+                    <td>
+                      <font face="Verdana,Arial" size="-1"><b>Enter a nickname:</b></font><br /><input type="text"
+                        name="ni" value="" cols="18" />
+                    </td>
+                    <td>&nbsp;</td>
+                    <td>
+                      <font face="Verdana,Arial" size="-1"><b>Nickname color:</b></font><br /><select name="co"
+                        class="select">
+                        {{range $i, $c := .Colors}}
+                        <option value="{{ $c.Color }}" style="color: {{ $c.Color }};" {{if eq $i 0}}selected{{end}}>
+                          {{$c.Name}}
+                        </option>
+                        {{end}}
+                      </select>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+          <table width="390" cellspacing="0" cellpadding="2" border="0">
+            <tr>
+              <td height="30" bgcolor="{{.Color}}" align="center">
+                <input type="submit" value="Join" style="width: 85px" class="input" />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <font size="1" face="arial">Upon Joining the Chat Room, you agree with the&nbsp;<a href="#"
+                    style="color: red"><b>Terms of service</b></a></font>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
 </form>
 {{end}}

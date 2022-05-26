@@ -1,15 +1,34 @@
 {{ define "chat-rooms" }}
-<ul>
-  {{ range $i, $r := .Rooms }}
-  <li>
-    <a href="{{ $r.ID | urlJoin }}">
-      <font face="arial,helvetica" color="{{ $r.Color }}" size="4"><strong>{{ $r.Name }}</strong></font>
-    </a>&nbsp;
-    <font face="arial,helvetica">
-      ({{ $r.ID | countUsers }} Online)
-    </font><br>
-    <font face="arial,helvetica" size="-1">{{ $r.Description }}</font><br><br>
-  </li>
-  {{ end }}
-</ul>
+
+<table cellspacing="0" cellpadding="5" border="0">
+  <tbody>
+    <tr valign="center">
+      <th valign="center" align="left">
+        <font face="arial,helvetica">Rooms</font>
+      </th>
+      <th valign="center">
+        <font face="arial,helvetica">Join</font>
+      </th>
+      <th valign="center">
+        <font face="arial,helvetica">People<br>online</font>
+      </th>
+    </tr>
+
+    {{ range $i, $r := .Rooms }}
+    <tr valign="center" align="center">
+      <td height="35" align="left">
+        <font face="arial,helvetica" color="{{ $r.Color }}"><strong>{{ $r.Name }}</strong></font>
+        <br>
+        <font face="arial,helvetica" size="-1">{{ $r.Description }}</font>
+      </td>
+      <td valign="center"><a href="{{ $r.ID | urlJoin }}"><img src="/public/foot.gif" width="21" height="21"
+            border="0"></a></td>
+      <td valign="" center>
+        <font face="arial,helvetica">{{ $r.ID | countUsers }}</font>
+      </td>
+    </tr>
+    {{ end }}
+
+  </tbody>
+</table>
 {{ end }}
