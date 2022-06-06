@@ -14,7 +14,7 @@ func observeRoomMessages(roomId string, events pubsub.Pubsub) {
 	c := events.Subscribe("discord-bot")
 	for message := range c {
 		msg := message.(chat.ChatEvent).Message
-		if msg != nil && !msg.FromDiscord {
+		if msg != nil && !msg.FromDiscord && !msg.IsSystemMessage {
 			room, _ := chat.GetSingleRoom(roomId)
 			if room.DiscordChannel != "" {
 				discord.Instance.SendMessage(room.DiscordChannel, msg)
