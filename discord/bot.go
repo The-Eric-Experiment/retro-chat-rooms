@@ -5,6 +5,7 @@ import (
 
 	"retro-chat-rooms/chat"
 	"retro-chat-rooms/config"
+	"retro-chat-rooms/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo" //discordgo package from the repo of bwmarrin .
@@ -12,30 +13,26 @@ import (
 
 func formatMessageForDiscord(m *chat.ChatMessage) string {
 	from, _ := chat.GetUser(m.From)
-	message := "**" + from.Nickname + "** "
+	message := " \n**" + from.Nickname + "** *(" + helpers.FormatTimestamp(m.Time) + ")*:  \n"
 
 	if m.IsSystemMessage {
 		message = "**" + m.SystemMessageSubject.Nickname + "** "
 		return strings.Replace(m.Message, "{nickname}", message, -1)
 	}
 
-	message += "*" + modeTransform[m.SpeechMode] + "* "
+	// message += "*" + modeTransform[m.SpeechMode] + "* "
 
 	if m.To != "" {
 		to, _ := chat.GetUser(m.To)
 		// Yuck
 		if to.IsAdmin && config.Current.OwnerChatUser.DiscordId != "" {
-			message += "<@" + config.Current.OwnerChatUser.DiscordId + ">"
+			message += "<@" + config.Current.OwnerChatUser.DiscordId + "> "
 		} else if to.DiscordId != "" {
-			message += "<@" + to.DiscordId + ">"
+			message += "<@" + to.DiscordId + "> "
 		} else {
-			message += "**" + to.Nickname + "**"
+			message += "**" + to.Nickname + "** "
 		}
-	} else {
-		message += "**Everyone**"
 	}
-
-	message += ": "
 
 	switch m.SpeechMode {
 	case chat.MODE_SAY_TO:
@@ -45,6 +42,8 @@ func formatMessageForDiscord(m *chat.ChatMessage) string {
 	case chat.MODE_WHISPER_TO:
 		message += "*" + strings.ToLower(m.Message) + "*"
 	}
+
+	message += "\n-"
 
 	return message
 }
