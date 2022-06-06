@@ -42,7 +42,7 @@ func supportsChatEventAwaiter(c *gin.Context) bool {
 	return true
 }
 
-func getJoinData(room chat.ChatRoom, errors []string) *gin.H {
+func getJoinData(room chat.ChatRoom, postUrl string, errors []string) *gin.H {
 	return &gin.H{
 		"CaptchaBuster": uuid.NewString(),
 		"Errors":        errors,
@@ -52,6 +52,7 @@ func getJoinData(room chat.ChatRoom, errors []string) *gin.H {
 		"Description":   room.Description,
 		"ID":            room.ID,
 		"Name":          room.Name,
+		"PostUrl":       postUrl,
 	}
 }
 
@@ -71,21 +72,13 @@ func GetJoin(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "join.html", getJoinData(room, make([]string, 0)))
+	c.HTML(http.StatusOK, "join.html", getJoinData(room, UrlJoin(roomId), make([]string, 0)))
 }
 
-func PostJoin(c *gin.Context, session sessions.Session) {
-	roomId := c.Param("id")
+func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoom, urlPost string) *gin.H {
 	nickname := c.PostForm("ni")
 	color := c.PostForm("co")
 	captcha := c.PostForm("chap")
-
-	room, found := chat.GetSingleRoom(roomId)
-
-	if !found {
-		c.Redirect(http.StatusFound, BustCache("/"))
-		return
-	}
 
 	userId := session.Get("userId")
 
@@ -124,8 +117,8 @@ func PostJoin(c *gin.Context, session sessions.Session) {
 	// YUCK THESE IFS
 	if len(errors) == 0 {
 		_, err := chat.RegisterUser(chat.ChatUser{
-			RoomId:    roomId,
-			ID:        chat.GetCombinedId(roomId, userId.(string)),
+			RoomId:    room.ID,
+			ID:        chat.GetCombinedId(room.ID, userId.(string)),
 			Nickname:  nickname,
 			Color:     color,
 			DiscordId: "",
@@ -139,13 +132,31 @@ func PostJoin(c *gin.Context, session sessions.Session) {
 	}
 
 	if len(errors) > 0 {
-		data := getJoinData(room, errors)
-		c.HTML(http.StatusOK, "join.html", data)
-		return
+		return getJoinData(room, urlPost, errors)
 	}
 
 	session.Set("supportsChatEventAwaiter", supportsChatEventAwaiter(c))
 	session.Save()
 
 	c.Redirect(http.StatusFound, UrlRoom(room.ID))
+	return nil
+}
+
+func PostJoin(c *gin.Context, session sessions.Session) {
+	roomId := c.Param("id")
+
+	room, found := chat.GetSingleRoom(roomId)
+
+	if !found {
+		c.Redirect(http.StatusFound, BustCache("/"))
+		return
+	}
+
+	failure := validateAndJoin(c, session, room, UrlJoin(room.ID))
+
+	if failure == nil {
+		return
+	}
+
+	c.HTML(http.StatusOK, "join.html", failure)
 }

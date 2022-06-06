@@ -46,6 +46,7 @@ func main() {
 
 	// Chat login
 	router.GET("/", routes.GetIndex)
+	router.POST("/", routeWithSession(routes.PostIndex))
 	router.GET("/join/:id", routes.GetJoin)
 	router.POST("/join/:id", routeWithSession(routes.PostJoin))
 	router.GET("/chaptcha", routeWithSession(routes.GetChaptcha))
