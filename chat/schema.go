@@ -25,6 +25,7 @@ type ChatRoom struct {
 	Description        string
 	Color              string
 	DiscordChannel     string
+	IntroMessage       string
 	LastUserListUpdate time.Time
 	TextColor          string
 }

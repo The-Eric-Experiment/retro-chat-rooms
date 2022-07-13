@@ -8,11 +8,12 @@ import (
 )
 
 type ConfigChatRoom struct {
-	ID             string `yaml:"id"`
-	Name           string `yaml:"name"`
-	Description    string `yaml:"description"`
-	Color          string `yaml:"color"`
-	DiscordChannel string `yaml:"discord-channel"`
+	ID                   string `yaml:"id"`
+	Name                 string `yaml:"name"`
+	Description          string `yaml:"description"`
+	Color                string `yaml:"color"`
+	DiscordChannel       string `yaml:"discord-channel"`
+	ChatRoomIntroMessage string `yaml:"chat-room-intro-message"`
 }
 
 type OwnerChatUserConfig struct {

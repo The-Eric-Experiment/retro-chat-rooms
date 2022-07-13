@@ -7,6 +7,7 @@ const (
 	USER_MIN_MESSAGE_RATE_SEC         = 2
 	USER_SCREAM_TIMEOUT_MIN   float64 = 2
 	UPDATER_WAIT_TIMEOUT_MS           = 30000
+	MAX_ROOM_MESSAGE_HISTORY 		  = 10
 
 	MODE_SAY_TO     = "says-to"
 	MODE_SCREAM_AT  = "screams-at"

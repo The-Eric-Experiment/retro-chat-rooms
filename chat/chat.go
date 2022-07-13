@@ -2,6 +2,7 @@ package chat
 
 import (
 	"errors"
+	"fmt"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/helpers"
 	"retro-chat-rooms/pubsub"
@@ -27,6 +28,8 @@ var (
 
 	// Key/Value list of Chat messages per user
 	userMessages map[string][]*ChatMessage = make(map[string][]*ChatMessage)
+
+	roomMessageHistory map[string][]*ChatMessage = make(map[string][]*ChatMessage)
 
 	// key/value list of user ids per room
 	roomUsers map[string][]string = make(map[string][]string)
@@ -145,11 +148,13 @@ func InitializeRooms() {
 			Color:              cr.Color,
 			DiscordChannel:     cr.DiscordChannel,
 			LastUserListUpdate: time.Now().UTC(),
+			IntroMessage:       cr.ChatRoomIntroMessage,
 			TextColor:          determineTextColor(cr.Color),
 		}
 		roomKeys = append(roomKeys, cr.ID)
 		rooms[room.ID] = room
 		roomUsers[room.ID] = make([]string, 0)
+		roomMessageHistory[room.ID] = make([]*ChatMessage, 0)
 		roomLastUserListChange[room.ID] = time.Now().UTC()
 		RoomEvents[room.ID] = pubsub.NewPubsub()
 
@@ -264,6 +269,8 @@ func RegisterUser(user ChatUser) (string, error) {
 		return "", err
 	}
 
+	userMessages[user.ID] = append(userMessages[user.ID], roomMessageHistory[user.RoomId]...)
+
 	if user.DiscordId == "" {
 		SendMessage(user.RoomId, &ChatMessage{
 			Time:                 time.Now().UTC(),
@@ -275,6 +282,20 @@ func RegisterUser(user ChatUser) (string, error) {
 			From:                 user.ID,
 			To:                   "",
 		})
+
+		room, found := GetSingleRoom(user.RoomId)
+		if found && room.IntroMessage != "" {
+			SendMessage(user.RoomId, &ChatMessage{
+				Time:                 time.Now().UTC(),
+				Message:              room.IntroMessage,
+				IsSystemMessage:      true,
+				SystemMessageSubject: user,
+				Privately:            true,
+				SpeechMode:           SPEECH_MODES[0].Value,
+				From:                 user.ID,
+				To:                   user.ID,
+			})
+		}
 
 		userListUpdated(user.RoomId)
 	}
@@ -311,6 +332,22 @@ func SendMessage(roomId string, message *ChatMessage) {
 		}
 
 		userMessages[combinedId] = append(userMessages[combinedId], message)
+	}
+
+	// Keeps a brief history of the public messages in the room so new people who login
+	// See some activity on the chat.
+	if !message.Privately || message.To == "" {
+		messages := roomMessageHistory[roomId]
+		if len(roomMessageHistory[roomId]) >= MAX_ROOM_MESSAGE_HISTORY {
+			initial := len(messages) - MAX_ROOM_MESSAGE_HISTORY + 1
+			messages = messages[initial:]
+		}
+
+		roomMessageHistory[roomId] = append(messages, message)
+
+		fmt.Println(lo.Map(roomMessageHistory[roomId], func(msg *ChatMessage, _ int) string {
+			return msg.Message
+		}))
 	}
 
 	RoomEvents[roomId].Publish(ChatEvent{Message: message})

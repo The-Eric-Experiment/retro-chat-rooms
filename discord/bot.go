@@ -43,7 +43,7 @@ func formatMessageForDiscord(m *chat.ChatMessage) string {
 		message += "*" + strings.ToLower(m.Message) + "*"
 	}
 
-	message += "\n-"
+	message += "\n<:spacer:996655506351460493>"
 
 	return message
 }
