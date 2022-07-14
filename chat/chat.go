@@ -2,7 +2,6 @@ package chat
 
 import (
 	"errors"
-	"fmt"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/helpers"
 	"retro-chat-rooms/pubsub"
@@ -344,10 +343,6 @@ func SendMessage(roomId string, message *ChatMessage) {
 		}
 
 		roomMessageHistory[roomId] = append(messages, message)
-
-		fmt.Println(lo.Map(roomMessageHistory[roomId], func(msg *ChatMessage, _ int) string {
-			return msg.Message
-		}))
 	}
 
 	RoomEvents[roomId].Publish(ChatEvent{Message: message})
