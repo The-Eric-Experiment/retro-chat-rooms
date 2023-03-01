@@ -2,6 +2,7 @@ package chat
 
 import (
 	"errors"
+	"html/template"
 	"retro-chat-rooms/config"
 	"retro-chat-rooms/helpers"
 	"retro-chat-rooms/pubsub"
@@ -68,6 +69,9 @@ func instantiateUser(user ChatUser) error {
 	defer mutex.Unlock()
 	mutex.Lock()
 	now := time.Now().UTC()
+
+	// Prevent XSS
+	user.Nickname = template.HTMLEscapeString(user.Nickname)
 
 	_, found := users[user.ID]
 

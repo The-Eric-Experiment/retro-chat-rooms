@@ -100,6 +100,12 @@ func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoo
 		errors = append(errors, "No nickname was entered in the form.")
 	}
 
+	validNickname, err := regexp.MatchString(`^[a-zA-Z0-9\s_-]+$`, nickname)
+
+	if !validNickname || err != nil {
+		errors = append(errors, "Only alpha-numeric characters, spaces, underscores and dashes are allowed in nicknames")
+	}
+
 	if profanity.IsProfaneNickname(nickname) {
 		errors = append(errors, "This nickname is not allowed.")
 	}
