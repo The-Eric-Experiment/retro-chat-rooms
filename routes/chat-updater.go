@@ -13,8 +13,15 @@ import (
 func waitForChatEvent(roomId string, combinedId string, cb func(messageUpdates bool, userListUpdates bool)) {
 	select {
 	case val := <-chat.RoomEvents[roomId].Subscribe(combinedId):
-		data := val.(chat.ChatEvent)
-		cb(data.Message != nil, data.IsUserListUpdate)
+		switch val.(type) {
+		case chat.ChatUserJoinedEvent:
+			cb(false, true)
+		case chat.ChatUserLeftEvent:
+			cb(false, true)
+		case chat.ChatMessageEvent:
+			cb(true, false)
+		}
+
 		break
 	case <-time.After(chat.UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
 		cb(false, false)

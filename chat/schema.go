@@ -40,6 +40,7 @@ type ChatMessage struct {
 	IsSystemMessage      bool
 	SystemMessageSubject ChatUser
 	FromDiscord          bool
+	InvolvedUsers        []ChatUser
 }
 
 type ChatUser struct {
@@ -49,17 +50,21 @@ type ChatUser struct {
 	DiscordId string
 	IsAdmin   bool
 	RoomId    string
+	IsWebUser bool
 }
 
 func (user ChatUser) IsDiscordUser() bool {
 	return user.DiscordId != ""
 }
 
-type UserListUpdatedEvent struct {
-	RoomId string
+type ChatMessageEvent struct {
+	Message *ChatMessage
 }
 
-type ChatEvent struct {
-	Message          *ChatMessage
-	IsUserListUpdate bool
+type ChatUserJoinedEvent struct {
+	User ChatUser
+}
+
+type ChatUserLeftEvent struct {
+	User ChatUser
 }

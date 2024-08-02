@@ -129,6 +129,7 @@ func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoo
 			Color:     color,
 			DiscordId: "",
 			IsAdmin:   false,
+			IsWebUser: true,
 		})
 		if err != nil && err.Error() == "user exists" {
 			errors = append(errors, "Someone is already using this Nickname, try a different one.")

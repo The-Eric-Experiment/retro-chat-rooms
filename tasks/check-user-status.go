@@ -9,7 +9,7 @@ func CheckUserStatus() {
 	for {
 		users := chat.GetAllUsers()
 		for _, user := range users {
-			if user.DiscordId == "" && chat.IsUserStale(user.ID) {
+			if user.IsWebUser && chat.IsUserStale(user.ID) {
 				chat.DeregisterUser(user.ID)
 			}
 		}

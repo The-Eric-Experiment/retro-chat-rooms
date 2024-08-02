@@ -58,11 +58,11 @@ func determineTextColor(color string) string {
 	return "#FFFFFF"
 }
 
-func userListUpdated(roomId string) {
+func userListUpdated(roomId string, event interface{}) {
 	defer mutex.Unlock()
 	mutex.Lock()
 	roomLastUserListChange[roomId] = helpers.Now()
-	RoomEvents[roomId].Publish(ChatEvent{IsUserListUpdate: true})
+	RoomEvents[roomId].Publish(event)
 }
 
 func instantiateUser(user ChatUser) error {
@@ -77,6 +77,13 @@ func instantiateUser(user ChatUser) error {
 
 	if found {
 		return errors.New("user exists")
+	}
+
+	comparisonNickname := strings.Trim(strings.ToLower(user.Nickname), " ")
+	for _, u := range users {
+		if strings.Trim(strings.ToLower(u.Nickname), " ") == comparisonNickname {
+			return errors.New("nickname selected")
+		}
 	}
 
 	users[user.ID] = user
@@ -137,6 +144,7 @@ func RegisterAdmin(roomId string) string {
 		DiscordId: cfg.DiscordId,
 		IsAdmin:   true,
 		RoomId:    roomId,
+		IsWebUser: false,
 	})
 
 	return combinedId
@@ -284,10 +292,11 @@ func RegisterUser(user ChatUser) (string, error) {
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,
 			To:                   "",
+			InvolvedUsers:        []ChatUser{user},
 		})
 
 		room, found := GetSingleRoom(user.RoomId)
-		if found && room.IntroMessage != "" {
+		if found && room.IntroMessage != "" && user.IsWebUser {
 			SendMessage(user.RoomId, &ChatMessage{
 				Time:                 time.Now().UTC(),
 				Message:              room.IntroMessage,
@@ -297,10 +306,11 @@ func RegisterUser(user ChatUser) (string, error) {
 				SpeechMode:           SPEECH_MODES[0].Value,
 				From:                 user.ID,
 				To:                   user.ID,
+				InvolvedUsers:        []ChatUser{user},
 			})
 		}
 
-		userListUpdated(user.RoomId)
+		userListUpdated(user.RoomId, ChatUserJoinedEvent{User: user})
 	}
 
 	return user.ID, nil
@@ -319,10 +329,12 @@ func DeregisterUser(combinedId string) {
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,
 			To:                   "",
+			InvolvedUsers:        []ChatUser{user},
 		})
 
-		userListUpdated(user.RoomId)
+		userListUpdated(user.RoomId, ChatUserLeftEvent{User: user})
 	}
+
 }
 
 func SendMessage(roomId string, message *ChatMessage) {
@@ -349,7 +361,7 @@ func SendMessage(roomId string, message *ChatMessage) {
 		roomMessageHistory[roomId] = append(messages, message)
 	}
 
-	RoomEvents[roomId].Publish(ChatEvent{Message: message})
+	RoomEvents[roomId].Publish(ChatMessageEvent{Message: message})
 }
 
 func Ping(combinedId string) {

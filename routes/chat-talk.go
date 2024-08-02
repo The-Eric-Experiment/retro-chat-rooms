@@ -147,6 +147,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 			Message:         "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
 			Privately:       true,
 			SpeechMode:      chat.MODE_SAY_TO,
+			InvolvedUsers:   []chat.ChatUser{user},
 		})
 
 		session.Set("coolDownMessageSent", true)
@@ -168,6 +169,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 			Message:         "Come on {nickname}! Let's be nice! This is a place for having fun!",
 			Privately:       true,
 			SpeechMode:      chat.MODE_SAY_TO,
+			InvolvedUsers:   []chat.ChatUser{user},
 		})
 
 		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
@@ -188,6 +190,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 			Message:         "Hi {nickname}, you're only allowed to scream once very " + strconv.FormatInt(int64(chat.USER_SCREAM_TIMEOUT_MIN), 10) + " minutes.",
 			Privately:       true,
 			SpeechMode:      chat.MODE_SAY_TO,
+			InvolvedUsers:   []chat.ChatUser{user},
 		})
 
 		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
@@ -197,6 +200,13 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 	if mode == chat.MODE_SCREAM_AT {
 		session.Set("lastScream", now)
 		session.Save()
+	}
+
+	involvedUsers := []chat.ChatUser{user}
+	toUser, foundToUser := chat.GetUser(toUserId)
+
+	if foundToUser {
+		involvedUsers = append(involvedUsers, toUser)
 	}
 
 	chat.SendMessage(roomId, &chat.ChatMessage{
