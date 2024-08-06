@@ -1,0 +1,20 @@
+package sockets
+
+const (
+	SERVER_ERROR                     = 0
+	SERVER_COLOR_LIST                = 1
+	SERVER_ROOM_LIST_START           = 2
+	SERVER_ROOM_LIST_ITEM            = 3
+	SERVER_ROOM_LIST_END             = 4
+	SERVER_USER_REGISTRATION_SUCCESS = 5
+	SERVER_USER_LIST_ADD             = 6
+	SERVER_USER_LIST_REMOVE          = 7
+	SERVER_USER_LIST_UPDATE          = 8
+	SERVER_MESSAGE_SENT              = 10
+
+	CLIENT_REGISTER_USER      = 100
+	CLIENT_SEND_MESSAGE       = 101
+	CLIENT_COLOR_LIST_REQUEST = 105
+	CLIENT_ROOM_LIST_REQUEST  = 106
+	CLIENT_PING               = 110
+)

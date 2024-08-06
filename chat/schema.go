@@ -2,6 +2,8 @@ package chat
 
 import (
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type PubSubPostMessage struct {
@@ -41,6 +43,38 @@ type ChatMessage struct {
 	SystemMessageSubject ChatUser
 	FromDiscord          bool
 	InvolvedUsers        []ChatUser
+}
+
+func (m *ChatMessage) GetFrom() *ChatUser {
+	if m.From == "" {
+		return nil
+	}
+
+	user, found := lo.Find(m.InvolvedUsers, func(u ChatUser) bool {
+		return u.ID == m.From
+	})
+
+	if !found {
+		return nil
+	}
+
+	return &user
+}
+
+func (m *ChatMessage) GetTo() *ChatUser {
+	if m.To == "" {
+		return nil
+	}
+
+	user, found := lo.Find(m.InvolvedUsers, func(u ChatUser) bool {
+		return u.ID == m.To
+	})
+
+	if !found {
+		return nil
+	}
+
+	return &user
 }
 
 type ChatUser struct {

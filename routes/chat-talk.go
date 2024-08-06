@@ -217,6 +217,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		IsSystemMessage: false,
 		Privately:       private == "on",
 		SpeechMode:      mode,
+		InvolvedUsers:   involvedUsers,
 	})
 
 	sendHtml(c, room, user, toUserId, updateUpdater, private == "on")

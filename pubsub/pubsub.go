@@ -40,7 +40,7 @@ func (p *pubsub) Subscribe(id string) chan interface{} {
 		return c
 	}
 
-	c = make(chan interface{})
+	c = make(chan interface{}, 100)
 
 	p.m.Lock()
 	p.subscribers[id] = c

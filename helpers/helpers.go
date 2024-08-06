@@ -9,3 +9,7 @@ func Now() time.Time {
 func FormatTimestamp(t time.Time) string {
 	return t.Format("03:04:05 PM")
 }
+
+func FormatTimestamp24H(t time.Time) string {
+	return t.Format("15:04:05")
+}
