@@ -141,13 +141,14 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 
 	if floodcontrol.IsCooldownPeriod(c) && (coolDownMessageSent == nil || !coolDownMessageSent.(bool)) {
 		chat.SendMessage(roomId, &chat.ChatMessage{
-			Time:            now,
-			To:              combinedId,
-			IsSystemMessage: true,
-			Message:         "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
-			Privately:       true,
-			SpeechMode:      chat.MODE_SAY_TO,
-			InvolvedUsers:   []chat.ChatUser{user},
+			Time:                 now,
+			To:                   combinedId,
+			IsSystemMessage:      true,
+			Message:              "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
+			Privately:            true,
+			SystemMessageSubject: &user,
+			SpeechMode:           chat.MODE_SAY_TO,
+			InvolvedUsers:        []chat.ChatUser{user},
 		})
 
 		session.Set("coolDownMessageSent", true)
@@ -163,13 +164,14 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 
 	if profanity.HasBlockedWords(message) {
 		chat.SendMessage(roomId, &chat.ChatMessage{
-			Time:            now,
-			To:              combinedId,
-			IsSystemMessage: true,
-			Message:         "Come on {nickname}! Let's be nice! This is a place for having fun!",
-			Privately:       true,
-			SpeechMode:      chat.MODE_SAY_TO,
-			InvolvedUsers:   []chat.ChatUser{user},
+			Time:                 now,
+			To:                   combinedId,
+			IsSystemMessage:      true,
+			Message:              "Come on {nickname}! Let's be nice! This is a place for having fun!",
+			Privately:            true,
+			SystemMessageSubject: &user,
+			SpeechMode:           chat.MODE_SAY_TO,
+			InvolvedUsers:        []chat.ChatUser{user},
 		})
 
 		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
@@ -184,13 +186,14 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 
 	if lastScream != nil && now.Sub(*lastScream.(*time.Time)).Minutes() <= chat.USER_SCREAM_TIMEOUT_MIN && mode == chat.MODE_SCREAM_AT {
 		chat.SendMessage(roomId, &chat.ChatMessage{
-			Time:            now,
-			To:              combinedId,
-			IsSystemMessage: true,
-			Message:         "Hi {nickname}, you're only allowed to scream once very " + strconv.FormatInt(int64(chat.USER_SCREAM_TIMEOUT_MIN), 10) + " minutes.",
-			Privately:       true,
-			SpeechMode:      chat.MODE_SAY_TO,
-			InvolvedUsers:   []chat.ChatUser{user},
+			Time:                 now,
+			To:                   combinedId,
+			IsSystemMessage:      true,
+			SystemMessageSubject: &user,
+			Message:              "Hi {nickname}, you're only allowed to scream once very " + strconv.FormatInt(int64(chat.USER_SCREAM_TIMEOUT_MIN), 10) + " minutes.",
+			Privately:            true,
+			SpeechMode:           chat.MODE_SAY_TO,
+			InvolvedUsers:        []chat.ChatUser{user},
 		})
 
 		sendHtml(c, room, user, toUserId, updateUpdater, private == "on")

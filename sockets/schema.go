@@ -70,9 +70,13 @@ type ServerUserListUpdate struct {
 }
 
 type ServerMessageSent struct {
-	FromNickname string `fieldOrder:"0"`
-	FromID       string `fieldOrder:"1"`
-	ToNickname   string `fieldOrder:"2"`
-	ToID         string `fieldOrder:"3"`
-	Text         string `fieldOrder:"4"`
+	RoomID               string `fieldOrder:"0"`
+	From                 string `fieldOrder:"1"`
+	To                   string `fieldOrder:"2"`
+	Privately            string `fieldOrder:"3"`
+	SpeechMode           string `fieldOrder:"4"`
+	Time                 string `fieldOrder:"5"`
+	IsSystemMessage      string `fieldOrder:"6"`
+	SystemMessageSubject string `fieldOrder:"7"`
+	Message              string `fieldOrder:"8"`
 }

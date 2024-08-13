@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/samber/lo"
 )
@@ -123,13 +122,13 @@ func removeUser(combinedId string) ChatUser {
 }
 
 func GetCombinedId(roomId string, userId string) string {
-	return uuid.NewMD5(uuid.NameSpaceOID, []byte(roomId+userId)).String()
+	return helpers.GenerateUniqueID(roomId + userId)
 }
 
 func RegisterAdmin(roomId string) string {
 	cfg := config.Current.OwnerChatUser
 
-	combinedId := GetCombinedId(roomId, cfg.Id)
+	combinedId := helpers.GenerateUniqueID(roomId + cfg.Id)
 
 	_, found := users[combinedId]
 
@@ -287,7 +286,7 @@ func RegisterUser(user ChatUser) (string, error) {
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} has joined the room!",
 			IsSystemMessage:      true,
-			SystemMessageSubject: user,
+			SystemMessageSubject: &user,
 			Privately:            false,
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,
@@ -301,7 +300,7 @@ func RegisterUser(user ChatUser) (string, error) {
 				Time:                 time.Now().UTC(),
 				Message:              room.IntroMessage,
 				IsSystemMessage:      true,
-				SystemMessageSubject: user,
+				SystemMessageSubject: &user,
 				Privately:            true,
 				SpeechMode:           SPEECH_MODES[0].Value,
 				From:                 user.ID,
@@ -324,7 +323,7 @@ func DeregisterUser(combinedId string) {
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} has left the room!",
 			IsSystemMessage:      true,
-			SystemMessageSubject: user,
+			SystemMessageSubject: &user,
 			Privately:            false,
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,

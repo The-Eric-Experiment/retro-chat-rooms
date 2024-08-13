@@ -65,7 +65,7 @@ func parseAndSet(target reflect.Value, val string) error {
 	return fmt.Errorf("field %v has type %v, cannot set to %v", target, target.Type(), val)
 }
 
-func extractFromInterface(obj interface{}) []string {
+func ExtractFromInterface(obj interface{}) []string {
 	val := reflect.ValueOf(obj).Elem()
 
 	numFields := val.NumField()
@@ -149,9 +149,15 @@ func determineMessageType(message string) (int, string) {
 	return t, msgContent
 }
 
+func SerializeObject(val interface{}) string {
+	fields := ExtractFromInterface(val)
+	return strings.Join(fields, " ")
+}
+
 func SerializeMessage(msgType int, val interface{}) string {
-	fields := extractFromInterface(val)
-	return strings.Join(append([]string{strconv.Itoa(msgType)}, fields...), " ") + string(byte(13)) + string(byte(10))
+	msg := strings.Join(append([]string{strconv.Itoa(msgType), SerializeObject(val)}), " ") + string(byte(13)) + string(byte(10))
+	fmt.Println("Sending: ", msg)
+	return msg
 }
 
 func DeserializeMessage[TMessage interface{}](obj TMessage, msg string) TMessage {

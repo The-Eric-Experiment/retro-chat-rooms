@@ -40,7 +40,7 @@ type ChatMessage struct {
 	Privately            bool
 	SpeechMode           string
 	IsSystemMessage      bool
-	SystemMessageSubject ChatUser
+	SystemMessageSubject *ChatUser
 	FromDiscord          bool
 	InvolvedUsers        []ChatUser
 }

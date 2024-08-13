@@ -56,17 +56,20 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 	combinedId := chat.GetCombinedId(roomId, userId)
 	room, found := chat.GetSingleRoom(roomId)
 
-	if !found {
+	user, hasUser := chat.GetUser(combinedId)
+
+	if !found || !hasUser {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
 	if floodcontrol.IsIPBanned(c) {
 		chat.SendMessage(roomId, &chat.ChatMessage{
-			Time:            time.Now().UTC(),
-			Message:         "{nickname} was kicked for flooding the channel too many times.",
-			IsSystemMessage: true,
-			SpeechMode:      chat.MODE_SAY_TO,
+			Time:                 time.Now().UTC(),
+			Message:              "{nickname} was kicked for flooding the channel too many times.",
+			IsSystemMessage:      true,
+			SystemMessageSubject: &user,
+			SpeechMode:           chat.MODE_SAY_TO,
 		})
 
 		chat.DeregisterUser(combinedId)
