@@ -63,7 +63,9 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 		return
 	}
 
-	if floodcontrol.IsIPBanned(c) {
+	sessionUserState := NewSessionUserState(c, session)
+
+	if floodcontrol.IsIPBanned(sessionUserState.GetUserIP()) {
 		chat.SendMessage(roomId, &chat.ChatMessage{
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} was kicked for flooding the channel too many times.",
