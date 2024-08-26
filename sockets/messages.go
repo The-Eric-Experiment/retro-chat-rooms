@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"retro-chat-rooms/chat"
+	"retro-chat-rooms/floodcontrol"
 	"retro-chat-rooms/helpers"
 	"strconv"
 	"strings"
@@ -30,6 +31,17 @@ func PushUserLeft(conn ISocket, user chat.ChatUser) {
 	conn.Write(response)
 }
 
+func PushUserKickedMessage(conn ISocket, evt chat.ChatUserKickedEvent) {
+	if evt.UserID != conn.GetUser().ID {
+		return
+	}
+	chat.DeregisterUser(conn.GetUser().ID)
+	response := SerializeMessage(SERVER_USER_KICKED, &ServerUserKicked{
+		Reason: evt.Message,
+	})
+	conn.Write(response)
+}
+
 func SerializeSubObject(val interface{}) string {
 	if val == nil || (val != nil && reflect.ValueOf(val).IsNil()) {
 		return ""
@@ -41,6 +53,12 @@ func SerializeSubObject(val interface{}) string {
 }
 
 func PushMessage(conn ISocket, msg chat.ChatMessage, isHistory bool) {
+	socketUserState := NewSocketsUserState(conn)
+
+	if floodcontrol.IsIPBanned(socketUserState.GetUserIP()) {
+		return
+	}
+
 	connUser := conn.GetUser()
 
 	if msg.Privately && msg.To != "" && (msg.To != connUser.ID && msg.From != connUser.ID) {
@@ -217,6 +235,13 @@ func sendMessage(conn ISocket, msg string) {
 
 	if !isValid {
 		return
+	}
+
+	if floodcontrol.IsIPBanned(socketUserState.GetUserIP()) {
+		go chat.RoomEvents[content.RoomID].Publish(chat.ChatUserKickedEvent{
+			UserID:  user.ID,
+			Message: "You have been temporarily kicked out for flooding.",
+		})
 	}
 
 	chat.SendMessage(&message)

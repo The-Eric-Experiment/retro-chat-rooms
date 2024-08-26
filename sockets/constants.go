@@ -9,6 +9,7 @@ const (
 	SERVER_USER_LIST_REMOVE          = 5
 	SERVER_USER_LIST_UPDATE          = 6
 	SERVER_MESSAGE_SENT              = 7
+	SERVER_USER_KICKED               = 8
 
 	CLIENT_REGISTER_USER      = 100
 	CLIENT_SEND_MESSAGE       = 101

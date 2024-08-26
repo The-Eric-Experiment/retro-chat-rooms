@@ -7,14 +7,14 @@ const (
 	// it's considered a flood if the number
 	// of messages reached MESSAGE_FLOOD_MESSAGES_COUNT
 	// within:
-	MESSAGE_FLOOD_RANGE_SEC float64 = 4
+	MESSAGE_FLOOD_RANGE_SEC float64 = 3
 	// it's considered a flood if the number
 	// of messages is this within x seconds
-	MESSAGE_FLOOD_MESSAGES_COUNT = 6
+	MESSAGE_FLOOD_MESSAGES_COUNT = 10
 	// this is the number of floods the user
 	// can do before they get blocked for a
 	// longer period.
-	MESSAGE_FLOOD_MAXIMUM_FLOODS = 5
+	MESSAGE_FLOOD_MAXIMUM_FLOODS = 4
 	// this is how long the user gets locked
 	// from sending messages if they flooded
 	// more than the number above.

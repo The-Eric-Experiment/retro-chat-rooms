@@ -103,3 +103,8 @@ type ChatUserJoinedEvent struct {
 type ChatUserLeftEvent struct {
 	User ChatUser
 }
+
+type ChatUserKickedEvent struct {
+	UserID  string
+	Message string
+}

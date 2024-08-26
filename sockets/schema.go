@@ -58,6 +58,10 @@ type ServerUserListRemove struct {
 	RoomID string `fieldOrder:"1"`
 }
 
+type ServerUserKicked struct {
+	Reason string `fieldOrder:"0"`
+}
+
 type ServerUserListUpdate struct {
 	RoomID  string `fieldOrder:"0"`
 	TotalID int32  `fieldOrder:"1"`

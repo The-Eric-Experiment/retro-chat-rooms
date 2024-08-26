@@ -101,6 +101,9 @@ func observeRoomEvents(connection ISocket, events pubsub.Pubsub) {
 		case chat.ChatUserLeftEvent:
 			PushUserLeft(connection, evt.User)
 
+		case chat.ChatUserKickedEvent:
+			PushUserKickedMessage(connection, evt)
+
 		}
 	}
 }
@@ -129,7 +132,7 @@ func processClient(connection ISocket) {
 		}
 	}()
 
-	// once user is registered, we can start observing room
+	// Once the user is registered, we can start observing room
 	// messages for that user
 	go func() {
 		registeredUser := <-userRegistered
@@ -144,7 +147,6 @@ func processClient(connection ISocket) {
 				fmt.Println("Client disconnected:", err.Error())
 
 				user := connection.GetUser()
-
 				chat.DeregisterUser(user.ID)
 
 				break

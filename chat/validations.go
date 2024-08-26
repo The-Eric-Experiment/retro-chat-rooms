@@ -140,7 +140,14 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 	}
 
 	if floodcontrol.IsIPBanned(userIp) {
-		return ChatMessage{}, false
+		return ChatMessage{
+			RoomID:               room.ID,
+			Time:                 time.Now().UTC(),
+			Message:              "{nickname} was kicked for flooding the channel too many times.",
+			IsSystemMessage:      true,
+			SystemMessageSubject: user,
+			SpeechMode:           MODE_SAY_TO,
+		}, true
 	}
 
 	coolDownMessageSent := userState.GetCoolDownMessageSent()
