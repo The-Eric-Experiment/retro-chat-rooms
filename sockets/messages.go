@@ -40,7 +40,7 @@ func SerializeSubObject(val interface{}) string {
 	return strings.ReplaceAll(strings.ReplaceAll(serialized, "\\", "\\\\"), "\"", "\\\"")
 }
 
-func PushMessage(conn ISocket, msg chat.ChatMessage) {
+func PushMessage(conn ISocket, msg chat.ChatMessage, isHistory bool) {
 	connUser := conn.GetUser()
 
 	if msg.Privately && msg.To != "" && (msg.To != connUser.ID && msg.From != connUser.ID) {
@@ -82,7 +82,7 @@ func PushMessage(conn ISocket, msg chat.ChatMessage) {
 	}
 
 	message := ServerMessageSent{
-		RoomID:               from.RoomId,
+		RoomID:               msg.RoomID,
 		From:                 SerializeSubObject(fromUser),
 		To:                   SerializeSubObject(toUser),
 		Privately:            strconv.FormatBool(msg.Privately),
@@ -91,6 +91,7 @@ func PushMessage(conn ISocket, msg chat.ChatMessage) {
 		IsSystemMessage:      strconv.FormatBool(msg.IsSystemMessage),
 		SystemMessageSubject: SerializeSubObject(systemMessageSubjectUser),
 		Message:              msg.Message,
+		IsHistory:            strconv.FormatBool(isHistory),
 	}
 
 	response := SerializeMessage(SERVER_MESSAGE_SENT, &message)
@@ -101,10 +102,14 @@ func PushMessage(conn ISocket, msg chat.ChatMessage) {
 func registerUser(conn ISocket, msg string) {
 	content := DeserializeMessage(RegisterUser{}, msg)
 
+	socketUserState := NewSocketsUserState(conn)
+
 	userId := chat.GetCombinedId(content.RoomID, uuid.NewString())
 	color := content.Color
 
-	_, err := chat.RegisterUser(chat.ChatUser{
+	errors := make([]string, 0)
+
+	newUser := chat.ChatUser{
 		ID:        userId,
 		Nickname:  content.Nickname,
 		Color:     color,
@@ -112,11 +117,22 @@ func registerUser(conn ISocket, msg string) {
 		DiscordId: "",
 		IsAdmin:   false,
 		IsWebUser: false,
-	})
+	}
 
-	if err != nil {
-		errMsg := err.Error()
-		response := SerializeMessage(SERVER_ERROR, &ServerError{Message: errMsg})
+	chat.ValidateUser(&socketUserState, newUser, &errors)
+
+	// YUCK THESE IFS
+	if len(errors) == 0 {
+		_, err := chat.RegisterUser(newUser)
+		if err != nil && err.Error() == "user exists" {
+			errors = append(errors, "Someone is already using this Nickname, try a different one.")
+		} else if err != nil {
+			errors = append(errors, "Couldn't register user, try again.")
+		}
+	}
+
+	if len(errors) > 0 {
+		response := SerializeMessage(SERVER_ERROR, &ServerError{Message: errors[0]})
 		conn.Write(response)
 		return
 	}
@@ -153,7 +169,7 @@ func registerUser(conn ISocket, msg string) {
 
 		if hasMessages {
 			for _, message := range messageHistory {
-				PushMessage(conn, *message)
+				PushMessage(conn, *message, true)
 			}
 		}
 	}()
@@ -180,9 +196,13 @@ func sendMessage(conn ISocket, msg string) {
 
 	if err != nil {
 		//TODO: DEAL WITH THIS
+		return
 	}
 
-	chat.SendMessage(content.RoomID, &chat.ChatMessage{
+	socketUserState := NewSocketsUserState(conn)
+
+	message, isValid := chat.ValidateMessage(&socketUserState, chat.ChatMessage{
+		RoomID:               content.RoomID,
 		Time:                 time.Now().UTC(),
 		Message:              content.Message,
 		From:                 content.UserID,
@@ -195,6 +215,11 @@ func sendMessage(conn ISocket, msg string) {
 		InvolvedUsers:        involvedUsers,
 	})
 
+	if !isValid {
+		return
+	}
+
+	chat.SendMessage(&message)
 }
 
 func ping(conn ISocket, msg string) {
@@ -220,14 +245,17 @@ func colorListRequest(conn ISocket, msg string) {
 func roomListRequest(conn ISocket, msg string) {
 	fmt.Println("Room list request")
 	rooms := chat.GetAllRooms()
-	conn.Write(SerializeMessage(SERVER_ROOM_LIST_START, &RoomListStart{}))
-	for _, room := range rooms {
-		conn.Write(SerializeMessage(SERVER_ROOM_LIST_ITEM, &RoomListItem{
-			RoomId: room.ID,
-			Name:   room.Name,
-		}))
+	roomIds := make([]string, len(rooms))
+	names := make([]string, len(rooms))
+
+	for idx, def := range rooms {
+		roomIds[idx] = def.ID
+		names[idx] = def.Name
 	}
-	conn.Write(SerializeMessage(SERVER_ROOM_LIST_END, &RoomListEnd{}))
+
+	response := SerializeMessage(SERVER_ROOM_LIST, &RoomList{RoomIDs: roomIds, RoomNames: names})
+
+	conn.Write(response)
 }
 
 func ProcessMessage(conn ISocket, message []byte) {

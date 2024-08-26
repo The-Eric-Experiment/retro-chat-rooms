@@ -11,22 +11,10 @@ import (
 type SessionUserState struct {
 	session sessions.Session
 	ctx     *gin.Context
-	errors  []string
 }
 
 func NewSessionUserState(ctx *gin.Context, session sessions.Session) SessionUserState {
-	errors := make([]string, 0)
-	return SessionUserState{session, ctx, errors}
-}
-
-func (sus *SessionUserState) GetSupportsChatEventAwaiter() bool {
-	supportsChatEventAwaiter := sus.session.Get("supportsChatEventAwaiter")
-
-	if supportsChatEventAwaiter == nil {
-		supportsChatEventAwaiter = true
-	}
-
-	return (supportsChatEventAwaiter.(bool))
+	return SessionUserState{session, ctx}
 }
 
 func (sus *SessionUserState) GetUserID() string {
@@ -88,8 +76,4 @@ func (sus *SessionUserState) GetUserIP() string {
 	}
 
 	return ip
-}
-
-func (sus *SessionUserState) ValidateUser() {
-
 }

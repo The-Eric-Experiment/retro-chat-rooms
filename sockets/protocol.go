@@ -85,7 +85,7 @@ func ExtractFromInterface(obj interface{}) []string {
 			finalVal := stringifyValue(val)
 			finalVal = strings.Trim(finalVal, " ")
 
-			if strings.Index(finalVal, " ") > 0 || len(finalVal) <= 0 {
+			if ((len(finalVal) > 1 && finalVal[0:2] != "[]") && strings.Index(finalVal, " ") > 0) || len(finalVal) <= 0 {
 				finalVal = "\"" + finalVal + "\""
 			}
 
@@ -155,7 +155,7 @@ func SerializeObject(val interface{}) string {
 }
 
 func SerializeMessage(msgType int, val interface{}) string {
-	msg := strings.Join(append([]string{strconv.Itoa(msgType), SerializeObject(val)}), " ") + string(byte(13)) + string(byte(10))
+	msg := strings.Join([]string{strconv.Itoa(msgType), SerializeObject(val)}, " ") + string(byte(13)) + string(byte(10))
 	fmt.Println("Sending: ", msg)
 	return msg
 }

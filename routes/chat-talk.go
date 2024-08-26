@@ -31,6 +31,16 @@ func sendHtml(ctx *gin.Context, room chat.ChatRoom, user chat.ChatUser, toUserId
 	})
 }
 
+func getSupportsChatEventAwaiter(session sessions.Session) bool {
+	supportsChatEventAwaiter := session.Get("supportsChatEventAwaiter")
+
+	if supportsChatEventAwaiter == nil {
+		supportsChatEventAwaiter = true
+	}
+
+	return (supportsChatEventAwaiter.(bool))
+}
+
 func GetChatTalk(c *gin.Context, session sessions.Session) {
 	roomId := c.Param("id")
 	toUserId := c.Query("to")
@@ -63,7 +73,8 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 	toUserId := c.PostForm("to")
 
 	sessionUserState := NewSessionUserState(c, session)
-	updateUpdater := !sessionUserState.GetSupportsChatEventAwaiter()
+	// TODO: Figure out why this needs ! and write a comment
+	updateUpdater := !getSupportsChatEventAwaiter(session)
 
 	room, found := chat.GetSingleRoom(roomId)
 
@@ -82,7 +93,8 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		return
 	}
 
-	finalMessage, canSend := chat.ValidateMessage(&sessionUserState, roomId, chat.ChatMessage{
+	finalMessage, canSend := chat.ValidateMessage(&sessionUserState, chat.ChatMessage{
+		RoomID:          room.ID,
 		Time:            time.Now().UTC(),
 		Message:         message,
 		From:            user.ID,
@@ -99,7 +111,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		return
 	}
 
-	chat.SendMessage(roomId, &finalMessage)
+	chat.SendMessage(&finalMessage)
 
 	sendHtml(c, room, user, toUserId, updateUpdater, private == "on")
 }

@@ -33,6 +33,7 @@ type ChatRoom struct {
 }
 
 type ChatMessage struct {
+	RoomID               string
 	Time                 time.Time
 	Message              string
 	From                 string

@@ -282,7 +282,8 @@ func RegisterUser(user ChatUser) (string, error) {
 	userMessages[user.ID] = append(userMessages[user.ID], roomMessageHistory[user.RoomId]...)
 
 	if user.DiscordId == "" {
-		SendMessage(user.RoomId, &ChatMessage{
+		SendMessage(&ChatMessage{
+			RoomID:               user.RoomId,
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} has joined the room!",
 			IsSystemMessage:      true,
@@ -296,7 +297,8 @@ func RegisterUser(user ChatUser) (string, error) {
 
 		room, found := GetSingleRoom(user.RoomId)
 		if found && room.IntroMessage != "" && user.IsWebUser {
-			SendMessage(user.RoomId, &ChatMessage{
+			SendMessage(&ChatMessage{
+				RoomID:               room.ID,
 				Time:                 time.Now().UTC(),
 				Message:              room.IntroMessage,
 				IsSystemMessage:      true,
@@ -319,7 +321,8 @@ func DeregisterUser(combinedId string) {
 	user := removeUser(combinedId)
 
 	if user.ID != "" && user.DiscordId == "" {
-		SendMessage(user.RoomId, &ChatMessage{
+		SendMessage(&ChatMessage{
+			RoomID:               user.RoomId,
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} has left the room!",
 			IsSystemMessage:      true,
@@ -336,11 +339,11 @@ func DeregisterUser(combinedId string) {
 
 }
 
-func SendMessage(roomId string, message *ChatMessage) {
+func SendMessage(message *ChatMessage) {
 	defer mutex.Unlock()
 	mutex.Lock()
 
-	for _, combinedId := range roomUsers[roomId] {
+	for _, combinedId := range roomUsers[message.RoomID] {
 		if message.Privately && message.To != "" && (message.To != combinedId && message.From != combinedId) {
 			continue
 		}
@@ -351,16 +354,16 @@ func SendMessage(roomId string, message *ChatMessage) {
 	// Keeps a brief history of the public messages in the room so new people who login
 	// See some activity on the chat.
 	if !message.Privately || message.To == "" {
-		messages := roomMessageHistory[roomId]
-		if len(roomMessageHistory[roomId]) >= MAX_ROOM_MESSAGE_HISTORY {
+		messages := roomMessageHistory[message.RoomID]
+		if len(roomMessageHistory[message.RoomID]) >= MAX_ROOM_MESSAGE_HISTORY {
 			initial := len(messages) - MAX_ROOM_MESSAGE_HISTORY + 1
 			messages = messages[initial:]
 		}
 
-		roomMessageHistory[roomId] = append(messages, message)
+		roomMessageHistory[message.RoomID] = append(messages, message)
 	}
 
-	RoomEvents[roomId].Publish(ChatMessageEvent{Message: message})
+	RoomEvents[message.RoomID].Publish(ChatMessageEvent{Message: message})
 }
 
 func Ping(combinedId string) {

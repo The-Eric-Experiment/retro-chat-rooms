@@ -66,7 +66,8 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 	sessionUserState := NewSessionUserState(c, session)
 
 	if floodcontrol.IsIPBanned(sessionUserState.GetUserIP()) {
-		chat.SendMessage(roomId, &chat.ChatMessage{
+		chat.SendMessage(&chat.ChatMessage{
+			RoomID:               roomId,
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} was kicked for flooding the channel too many times.",
 			IsSystemMessage:      true,
@@ -106,5 +107,7 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 		result <- data
 	})
 
-	c.HTML(http.StatusOK, "chat-updater.html", <-result)
+	r := <-result
+
+	c.HTML(http.StatusOK, "chat-updater.html", r)
 }

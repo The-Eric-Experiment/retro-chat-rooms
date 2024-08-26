@@ -14,7 +14,6 @@ import (
 )
 
 type IUserState interface {
-	GetSupportsChatEventAwaiter() bool
 	GetUserID() string
 	GetCoolDownMessageSent() bool
 	SetCoolDownMessageSent(v bool)
@@ -115,10 +114,10 @@ func IsNickVariation(input string, against string) bool {
 	return percentA >= 70.0 || percentB >= 70.0 || distancePercent <= 0.25
 }
 
-func ValidateMessage(userState IUserState, roomId string, inputMsg ChatMessage) (ChatMessage, bool) {
+func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, bool) {
 	now := time.Now().UTC()
 
-	room, found := GetSingleRoom(roomId)
+	room, found := GetSingleRoom(inputMsg.RoomID)
 
 	if !found {
 		return ChatMessage{}, false
@@ -154,6 +153,7 @@ func ValidateMessage(userState IUserState, roomId string, inputMsg ChatMessage) 
 		userState.SetCoolDownMessageSent(true)
 
 		return ChatMessage{
+			RoomID:               room.ID,
 			Time:                 now,
 			To:                   user.ID,
 			IsSystemMessage:      true,
@@ -171,6 +171,7 @@ func ValidateMessage(userState IUserState, roomId string, inputMsg ChatMessage) 
 
 	if profanity.HasBlockedWords(inputMsg.Message) {
 		return ChatMessage{
+			RoomID:               room.ID,
 			Time:                 now,
 			To:                   user.ID,
 			IsSystemMessage:      true,
@@ -188,11 +189,12 @@ func ValidateMessage(userState IUserState, roomId string, inputMsg ChatMessage) 
 
 	if now.Sub(lastScream).Minutes() <= USER_SCREAM_TIMEOUT_MIN && inputMsg.SpeechMode == MODE_SCREAM_AT {
 		return ChatMessage{
+			RoomID:               room.ID,
 			Time:                 now,
 			To:                   user.ID,
 			IsSystemMessage:      true,
 			SystemMessageSubject: user,
-			Message:              "Hi {nickname}, you're only allowed to scream once very " + strconv.FormatInt(int64(USER_SCREAM_TIMEOUT_MIN), 10) + " minutes.",
+			Message:              "Hi {nickname}, you're only allowed to scream once every " + strconv.FormatInt(int64(USER_SCREAM_TIMEOUT_MIN), 10) + " minutes.",
 			Privately:            true,
 			SpeechMode:           MODE_SAY_TO,
 			InvolvedUsers:        []ChatUser{*user},
@@ -214,6 +216,7 @@ func ValidateMessage(userState IUserState, roomId string, inputMsg ChatMessage) 
 	message := profanity.ReplaceSensoredProfanity(inputMsg.Message)
 
 	return ChatMessage{
+		RoomID:          room.ID,
 		Time:            now,
 		Message:         message,
 		From:            user.ID,

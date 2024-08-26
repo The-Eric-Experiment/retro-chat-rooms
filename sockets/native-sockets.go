@@ -7,15 +7,28 @@ import (
 	"os"
 	"retro-chat-rooms/chat"
 	"retro-chat-rooms/pubsub"
+	"sync"
 	"syscall"
 
 	"github.com/google/uuid"
 )
 
 type NativeSockets struct {
-	conn net.Conn
-	id   string
-	user chat.ChatUser
+	conn   net.Conn
+	id     string
+	user   chat.ChatUser
+	states map[string]interface{}
+	mutex  sync.Mutex
+}
+
+func NewNativeSockets(id string, conn net.Conn) NativeSockets {
+	return NativeSockets{
+		id:     id,
+		conn:   conn,
+		states: make(map[string]interface{}),
+		mutex:  sync.Mutex{},
+		user:   chat.ChatUser{},
+	}
 }
 
 func (ns *NativeSockets) Read() ([]byte, error) {
@@ -48,6 +61,29 @@ func (ns *NativeSockets) SetUser(user chat.ChatUser) {
 	ns.user = user
 }
 
+func (ns *NativeSockets) GetState(key string) interface{} {
+	ns.mutex.Lock()
+	defer ns.mutex.Unlock()
+
+	return ns.states[key]
+}
+
+func (ns *NativeSockets) SetState(key string, value interface{}) {
+	ns.mutex.Lock()
+	defer ns.mutex.Unlock()
+
+	ns.states[key] = value
+}
+
+func (ns *NativeSockets) GetClientIP() string {
+	clientIP, _, err := net.SplitHostPort(ns.conn.RemoteAddr().String())
+	if err != nil {
+		return ""
+	}
+
+	return clientIP
+}
+
 func observeRoomEvents(connection ISocket, events pubsub.Pubsub) {
 	c := events.Subscribe(connection.ID())
 	defer func() {
@@ -57,7 +93,7 @@ func observeRoomEvents(connection ISocket, events pubsub.Pubsub) {
 		switch evt := message.(type) {
 
 		case chat.ChatMessageEvent:
-			PushMessage(connection, *evt.Message)
+			PushMessage(connection, *evt.Message, false)
 
 		case chat.ChatUserJoinedEvent:
 			PushUserJoined(connection, evt.User)
@@ -141,10 +177,10 @@ func ServeSockets(serverPort string) {
 		}
 
 		clientID := uuid.New().String()
-		conn := &NativeSockets{conn: connection, id: clientID}
+		conn := NewNativeSockets(clientID, connection)
 
 		fmt.Printf("Client %s connected\n", clientID)
 
-		go processClient(conn)
+		go processClient(&conn)
 	}
 }

@@ -3,15 +3,9 @@ package sockets
 type RoomListRequest struct {
 }
 
-type RoomListStart struct {
-}
-
-type RoomListEnd struct {
-}
-
-type RoomListItem struct {
-	RoomId string `fieldOrder:"0"`
-	Name   string `fieldOrder:"1"`
+type RoomList struct {
+	RoomIDs   []string `fieldOrder:"0"`
+	RoomNames []string `fieldOrder:"1"`
 }
 
 type SendMessage struct {
@@ -78,5 +72,6 @@ type ServerMessageSent struct {
 	Time                 string `fieldOrder:"5"`
 	IsSystemMessage      string `fieldOrder:"6"`
 	SystemMessageSubject string `fieldOrder:"7"`
-	Message              string `fieldOrder:"8"`
+	IsHistory            string `fieldOrder:"8"`
+	Message              string `fieldOrder:"9"`
 }

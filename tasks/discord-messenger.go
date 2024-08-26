@@ -72,7 +72,8 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 		}
 	}
 
-	chat.SendMessage(roomId, &chat.ChatMessage{
+	chat.SendMessage(&chat.ChatMessage{
+		RoomID:          roomId,
 		Time:            now,
 		Message:         content,
 		From:            user.ID,
