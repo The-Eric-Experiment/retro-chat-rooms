@@ -11,7 +11,7 @@ type ISocket interface {
 	SetState(key string, value interface{})
 	GetClientIP() string
 	Read() ([]byte, error)
-	Write(string) error
+	Write([]byte) error
 	Close() error
 	ID() string
 }

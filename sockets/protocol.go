@@ -1,6 +1,9 @@
 package sockets
 
 import (
+	"bytes"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -132,21 +135,26 @@ func injectIntoInterface(val interface{}, msgContent string) {
 	}
 }
 
-func determineMessageType(message string) (int, string) {
-	var msgType string
-	firstSpaceIdx := strings.IndexByte(message, ' ')
-	if firstSpaceIdx == -1 {
-		length := len(message)
-		msgType = message[:length]
-	} else {
-		msgType = message[:firstSpaceIdx]
+func determineMessageType(message []byte) (int, int, string, error) {
+	if len(message) < 4 {
+		return 0, 0, "", errors.New("message too short")
 	}
-	msgContent := ""
-	if firstSpaceIdx > 0 {
-		msgContent = message[firstSpaceIdx+1:]
+
+	// Extract the first 2 bytes as the msgType in big endian
+	msgType := int(binary.BigEndian.Uint16(message[:2]))
+
+	// Extract the next 2 bytes as the content length in big endian
+	contentLength := int(binary.BigEndian.Uint16(message[2:4]))
+
+	// Verify the message length matches the content length
+	if len(message[4:]) < contentLength {
+		return 0, 0, "", errors.New("message length mismatch")
 	}
-	t, _ := strconv.Atoi(msgType)
-	return t, msgContent
+
+	// Extract the content based on the content length
+	msgContent := string(message[4 : 4+contentLength])
+
+	return msgType, contentLength, msgContent, nil
 }
 
 func SerializeObject(val interface{}) string {
@@ -154,10 +162,31 @@ func SerializeObject(val interface{}) string {
 	return strings.Join(fields, " ")
 }
 
-func SerializeMessage(msgType int, val interface{}) string {
-	msg := strings.Join([]string{strconv.Itoa(msgType), SerializeObject(val)}, " ") + string(byte(13)) + string(byte(10))
-	fmt.Println("Sending: ", msg)
-	return msg
+func SerializeMessage(msgType int, val interface{}) []byte {
+	content := SerializeObject(val)
+	contentLength := len(content)
+	// Create a buffer to hold the message
+	var buffer bytes.Buffer
+
+	// Convert msgType to big endian (2 bytes)
+	msgTypeBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(msgTypeBytes, uint16(msgType))
+
+	// Convert contentLength to big endian (2 bytes)
+	lengthBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(lengthBytes, uint16(contentLength))
+
+	// Write the header to the buffer
+	buffer.Write(msgTypeBytes)
+	buffer.Write(lengthBytes)
+
+	// Write the content (the actual serialized message)
+	buffer.Write([]byte(content))
+
+	// fmt.Println("Sending: %d, %d: %s", msgType, contentLength, content)
+
+	// Return the final byte slice
+	return buffer.Bytes()
 }
 
 func DeserializeMessage[TMessage interface{}](obj TMessage, msg string) TMessage {

@@ -18,8 +18,8 @@ func (websocks *WebSocket) Read() ([]byte, error) {
 	return p, nil
 }
 
-func (websocks *WebSocket) Write(msg string) error {
-	return websocks.ws.WriteMessage(1, []byte(msg))
+func (websocks *WebSocket) Write(msg []byte) error {
+	return websocks.ws.WriteMessage(1, msg)
 }
 
 func (websocks *WebSocket) Close() error {

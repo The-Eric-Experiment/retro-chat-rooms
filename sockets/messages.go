@@ -284,9 +284,11 @@ func roomListRequest(conn ISocket, msg string) {
 }
 
 func ProcessMessage(conn ISocket, message []byte) {
-	msg := string(message)
-	t, msgContent := determineMessageType(msg)
-	switch t {
+	msgType, _, msgContent, err := determineMessageType(message)
+	if err != nil {
+		return
+	}
+	switch msgType {
 	case CLIENT_REGISTER_USER:
 		registerUser(conn, msgContent)
 	case CLIENT_COLOR_LIST_REQUEST:
@@ -297,7 +299,5 @@ func ProcessMessage(conn ISocket, message []byte) {
 		ping(conn, msgContent)
 	case CLIENT_SEND_MESSAGE:
 		sendMessage(conn, msgContent)
-	default:
-		conn.Write(`0 "Invalid client message"`)
 	}
 }

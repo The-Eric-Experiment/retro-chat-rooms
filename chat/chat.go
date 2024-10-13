@@ -60,7 +60,7 @@ func determineTextColor(color string) string {
 func userListUpdated(roomId string, event interface{}) {
 	defer mutex.Unlock()
 	mutex.Lock()
-	roomLastUserListChange[roomId] = helpers.Now()
+	roomLastUserListChange[roomId] = helpers.Now().UTC()
 	RoomEvents[roomId].Publish(event)
 }
 

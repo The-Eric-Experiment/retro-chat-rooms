@@ -1,6 +1,7 @@
 package sockets
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -40,8 +41,8 @@ func (ns *NativeSockets) Read() ([]byte, error) {
 	return buf[:n], nil
 }
 
-func (ns *NativeSockets) Write(msg string) error {
-	_, err := ns.conn.Write([]byte(msg))
+func (ns *NativeSockets) Write(msg []byte) error {
+	_, err := ns.conn.Write(msg)
 	return err
 }
 
@@ -84,60 +85,78 @@ func (ns *NativeSockets) GetClientIP() string {
 	return clientIP
 }
 
-func observeRoomEvents(connection ISocket, events pubsub.Pubsub) {
+func observeRoomEvents(connection ISocket, events pubsub.Pubsub, ctx context.Context) {
 	c := events.Subscribe(connection.ID())
 	defer func() {
 		events.Unsubscribe(connection.ID())
 	}()
-	for message := range c {
-		switch evt := message.(type) {
 
-		case chat.ChatMessageEvent:
-			PushMessage(connection, *evt.Message, false)
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Context canceled in observeRoomEvents")
+			return
+		case message := <-c:
+			switch evt := message.(type) {
 
-		case chat.ChatUserJoinedEvent:
-			PushUserJoined(connection, evt.User)
+			case chat.ChatMessageEvent:
+				PushMessage(connection, *evt.Message, false)
 
-		case chat.ChatUserLeftEvent:
-			PushUserLeft(connection, evt.User)
+			case chat.ChatUserJoinedEvent:
+				PushUserJoined(connection, evt.User)
 
-		case chat.ChatUserKickedEvent:
-			PushUserKickedMessage(connection, evt)
+			case chat.ChatUserLeftEvent:
+				PushUserLeft(connection, evt.User)
 
+			case chat.ChatUserKickedEvent:
+				PushUserKickedMessage(connection, evt)
+
+			}
 		}
 	}
 }
 
 func processClient(connection ISocket) {
 	defer connection.Close()
-
 	fmt.Printf("Processing client %s\n", connection.ID())
 
 	userRegistered := make(chan chat.ChatUser)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// Waits for the user to be registered so it associates it with the connection
-	// and signals it has been registered
 	go func() {
+		defer fmt.Println("Exiting user registration goroutine")
 		c := InternalEvents.Subscribe("conn_" + connection.ID())
 		defer InternalEvents.Unsubscribe("conn_" + connection.ID())
-		for message := range c {
-			switch msg := message.(type) {
-			case InternalUserRegisteredEvent:
-				if connection.ID() == msg.ConnectionID {
-					connection.SetUser(msg.User)
-					userRegistered <- msg.User
-					return
+		defer close(userRegistered)
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("Context canceled for user registration")
+				return
+			case message := <-c:
+				switch msg := message.(type) {
+				case InternalUserRegisteredEvent:
+					if connection.ID() == msg.ConnectionID {
+						connection.SetUser(msg.User)
+						userRegistered <- msg.User
+						return
+					}
 				}
 			}
 		}
 	}()
 
-	// Once the user is registered, we can start observing room
-	// messages for that user
 	go func() {
-		registeredUser := <-userRegistered
-		roomEvents := chat.RoomEvents[registeredUser.RoomId]
-		observeRoomEvents(connection, roomEvents)
+		defer fmt.Println("Exiting room observation goroutine")
+		select {
+		case <-ctx.Done():
+			fmt.Println("Context canceled for room observation")
+			return
+		case registeredUser := <-userRegistered:
+			roomEvents := chat.RoomEvents[registeredUser.RoomId]
+			observeRoomEvents(connection, roomEvents, ctx)
+		}
 	}()
 
 	for {
@@ -148,10 +167,11 @@ func processClient(connection ISocket) {
 
 				user := connection.GetUser()
 				chat.DeregisterUser(user.ID)
-
+				cancel()
 				break
 			}
 			fmt.Println("Error reading:", err.Error())
+			cancel()
 			break
 		}
 
