@@ -183,7 +183,8 @@ func SerializeMessage(msgType int, val interface{}) []byte {
 	// Write the content (the actual serialized message)
 	buffer.Write([]byte(content))
 
-	// fmt.Println("Sending: %d, %d: %s", msgType, contentLength, content)
+	fmt.Printf("Sending message: Type: %d, Length: %d, Content: %s, ActualLength: %d\n",
+		msgType, contentLength, content, len(content))
 
 	// Return the final byte slice
 	return buffer.Bytes()
