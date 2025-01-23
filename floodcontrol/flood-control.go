@@ -30,7 +30,9 @@ func IsCooldownPeriod(ip string) bool {
 		return false
 	}
 
-	return time.Now().UTC().Sub(control.LastMessageFlood).Minutes() <= MESSAGE_FLOOD_COOLDOWN_MIN
+	totalSecs := time.Now().UTC().Sub(control.LastMessageFlood).Seconds()
+
+	return totalSecs <= MESSAGE_FLOOD_COOLDOWN_SEC
 }
 
 func SetFlooded(ip string) {

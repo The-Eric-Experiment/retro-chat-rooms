@@ -22,36 +22,52 @@ type IUserState interface {
 	GetUserIP() string
 }
 
-func checkForMessageAbuse(room ChatRoom, user ChatUser) bool {
+func checkForMessageAbuse(user ChatUser) bool {
+	// Ignore checks for Discord users or admins
 	if user.IsDiscordUser() || user.IsAdmin {
 		return false
 	}
 
+	// Retrieve messages sent by the user
 	messages, found := GetMessagesByUser(user.ID)
-
 	if !found {
 		return false
 	}
 
-	messages = lo.Filter(messages, func(m *ChatMessage, _ int) bool { return !m.IsSystemMessage })
+	// Filter out system messages and only include user messages
+	messages = lo.Filter(messages, func(m *ChatMessage, _ int) bool {
+		return !m.IsSystemMessage && m.From == user.ID
+	})
 
+	// Check if we have enough messages to evaluate flood control
 	if len(messages) < floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT {
 		return false
 	}
 
+	// Find the most recent message
 	lastMessage := messages[len(messages)-1]
 
-	initial := len(messages) - floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT
+	// Only consider messages within the last `MESSAGE_FLOOD_RANGE_SEC`
+	thresholdTime := lastMessage.Time.Add(-time.Duration(floodcontrol.MESSAGE_FLOOD_RANGE_SEC) * time.Second)
+	relevantMessages := lo.Filter(messages, func(m *ChatMessage, _ int) bool {
+		return m.Time.After(thresholdTime)
+	})
 
-	messages = messages[initial : len(messages)-1]
-
-	for _, msg := range messages {
-		seconds := msg.Time.Sub(lastMessage.Time).Seconds()
-		if seconds > floodcontrol.MESSAGE_FLOOD_RANGE_SEC {
-			return false
-		}
+	// If there are fewer than the required count, no flood
+	if len(relevantMessages) < floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT {
+		return false
 	}
 
+	// Ensure the cooldown period has passed since the last message in the flood
+	firstFloodMessage := relevantMessages[0] // The first message in the flood
+	cooldownEnd := firstFloodMessage.Time.Add(time.Duration(floodcontrol.MESSAGE_FLOOD_COOLDOWN_SEC) * time.Second)
+
+	// If the cooldown has expired and no further flood occurred, it's not abuse
+	if time.Now().After(cooldownEnd) {
+		return false
+	}
+
+	// Otherwise, the user is still in a restricted state
 	return true
 }
 
@@ -135,7 +151,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 
 	userIp := userState.GetUserIP()
 
-	if checkForMessageAbuse(room, *user) {
+	if checkForMessageAbuse(*user) && !floodcontrol.IsCooldownPeriod(userIp) {
 		floodcontrol.SetFlooded(userIp)
 	}
 
@@ -152,6 +168,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 
 	coolDownMessageSent := userState.GetCoolDownMessageSent()
 
+	// Maybe with some refactor we can use the checkForMessageAbuse directly here?
 	if floodcontrol.IsCooldownPeriod(userIp) && coolDownMessageSent {
 		return ChatMessage{}, false
 	}
@@ -164,7 +181,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 			Time:                 now,
 			To:                   user.ID,
 			IsSystemMessage:      true,
-			Message:              "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_MIN), 10) + " minutes.",
+			Message:              "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_SEC)/60, 10) + " minutes.",
 			Privately:            true,
 			SystemMessageSubject: user,
 			SpeechMode:           MODE_SAY_TO,

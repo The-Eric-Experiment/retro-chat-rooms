@@ -3,11 +3,11 @@ package floodcontrol
 const (
 	// how long the user has to wait to send
 	// a message after a flood in minutes
-	MESSAGE_FLOOD_COOLDOWN_MIN float64 = 2
+	MESSAGE_FLOOD_COOLDOWN_SEC float64 = 120
 	// it's considered a flood if the number
 	// of messages reached MESSAGE_FLOOD_MESSAGES_COUNT
 	// within:
-	MESSAGE_FLOOD_RANGE_SEC float64 = 3
+	MESSAGE_FLOOD_RANGE_SEC float64 = 5
 	// it's considered a flood if the number
 	// of messages is this within x seconds
 	MESSAGE_FLOOD_MESSAGES_COUNT = 10
