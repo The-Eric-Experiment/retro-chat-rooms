@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"fmt"
 	"math"
 	"regexp"
 	"retro-chat-rooms/config"
@@ -151,14 +152,12 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 
 	userIp := userState.GetUserIP()
 
-	if checkForMessageAbuse(*user) && !floodcontrol.IsCooldownPeriod(userIp) {
-		floodcontrol.SetFlooded(userIp)
-	}
+	floodcontrol.RecordMessage(userIp)
 
 	if floodcontrol.IsIPBanned(userIp) {
 		return ChatMessage{
 			RoomID:               room.ID,
-			Time:                 time.Now().UTC(),
+			Time:                 now,
 			Message:              "{nickname} was kicked for flooding the channel too many times.",
 			IsSystemMessage:      true,
 			SystemMessageSubject: user,
@@ -166,22 +165,24 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 		}, true
 	}
 
-	coolDownMessageSent := userState.GetCoolDownMessageSent()
+	if floodcontrol.IsCooldownPeriod(userIp) {
+		coolDownMessageSent := userState.GetCoolDownMessageSent()
 
-	// Maybe with some refactor we can use the checkForMessageAbuse directly here?
-	if floodcontrol.IsCooldownPeriod(userIp) && coolDownMessageSent {
-		return ChatMessage{}, false
-	}
+		if coolDownMessageSent {
+			// We already showed them a cooldown message, so just ignore
+			return ChatMessage{}, false
+		}
 
-	if floodcontrol.IsCooldownPeriod(userIp) && !coolDownMessageSent {
 		userState.SetCoolDownMessageSent(true)
-
 		return ChatMessage{
-			RoomID:               room.ID,
-			Time:                 now,
-			To:                   user.ID,
-			IsSystemMessage:      true,
-			Message:              "Hey {nickname}, chill out, you'll be able to send messages again in " + strconv.FormatInt(int64(floodcontrol.MESSAGE_FLOOD_COOLDOWN_SEC)/60, 10) + " minutes.",
+			RoomID:          room.ID,
+			Time:            now,
+			To:              user.ID,
+			IsSystemMessage: true,
+			Message: fmt.Sprintf(
+				"Hey {nickname}, chill out, you'll be able to send messages again %d minutes after your last message attempt.",
+				int(floodcontrol.MESSAGE_FLOOD_COOLDOWN_SEC/60),
+			),
 			Privately:            true,
 			SystemMessageSubject: user,
 			SpeechMode:           MODE_SAY_TO,
@@ -189,6 +190,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 		}, true
 	}
 
+	// Reset the "cooldown message sent" so if they flood again, we can show it
 	userState.SetCoolDownMessageSent(false)
 
 	// Check if there's slurs
