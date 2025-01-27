@@ -27,8 +27,8 @@ func writeMessage(b *strings.Builder, msg *chat.ChatMessage) {
 }
 
 func writeUserMessageDescriptor(b *strings.Builder, speechMode string, message *chat.ChatMessage, messageRendered func()) {
-	from, _ := chat.GetUser(message.From)
-	to, _ := chat.GetUser(message.To)
+	from := message.GetFrom()
+	to := message.GetTo()
 
 	writeNickname(b, from)
 	if message.Privately {

@@ -93,6 +93,13 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		return
 	}
 
+	involvedUsers := []chat.ChatUser{user}
+	toUser, foundToUser := chat.GetUser(toUserId)
+
+	if foundToUser {
+		involvedUsers = append(involvedUsers, toUser)
+	}
+
 	finalMessage, canSend := chat.ValidateMessage(&sessionUserState, chat.ChatMessage{
 		RoomID:          room.ID,
 		Time:            time.Now().UTC(),
@@ -103,7 +110,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		SpeechMode:      mode,
 		IsSystemMessage: false,
 		FromDiscord:     false,
-		InvolvedUsers:   []chat.ChatUser{user},
+		InvolvedUsers:   involvedUsers,
 	})
 
 	if !canSend {
