@@ -2,6 +2,8 @@ site-name: My Chat!
 chat-room-header-logo: /public/headerimage.gif
 chat-room-header-height: 110
 # discord-bot-token: 
+# discord-webhook-id: 
+# discord-webhook-token: 
 owner-chat-user:
   #discord_id:
   id: 

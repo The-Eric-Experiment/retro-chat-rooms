@@ -5,20 +5,22 @@ import (
 
 	"retro-chat-rooms/chat"
 	"retro-chat-rooms/config"
-	"retro-chat-rooms/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo" //discordgo package from the repo of bwmarrin .
 )
 
-func formatMessageForDiscord(m *chat.ChatMessage) string {
+func formatMessageForDiscord(m *chat.ChatMessage) discordgo.WebhookParams {
 	from, _ := chat.GetUser(m.From)
-	message := " \n**" + from.Nickname + "** *(" + helpers.FormatTimestamp(m.Time) + ")*:  \n"
 
 	if m.IsSystemMessage {
-		message = "**" + m.SystemMessageSubject.Nickname + "** "
-		return strings.Replace(m.Message, "{nickname}", message, -1)
+		return discordgo.WebhookParams{
+			Username: "System",
+			Content:  strings.Replace(m.Message, "{nickname}", from.Nickname, -1),
+		}
 	}
+
+	message := ""
 
 	// message += "*" + modeTransform[m.SpeechMode] + "* "
 
@@ -45,7 +47,15 @@ func formatMessageForDiscord(m *chat.ChatMessage) string {
 
 	message += "\n"
 
-	return message
+	return discordgo.WebhookParams{
+		Content:  message,
+		Username: strings.Replace("{nickname} @ Old'aVista Chat!", "{nickname}", from.Nickname, -1),
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				"users",
+			},
+		},
+	}
 }
 
 type DiscordBot struct {
@@ -87,9 +97,18 @@ func (bot *DiscordBot) SendMessage(channel string, message *chat.ChatMessage) {
 		return
 	}
 
-	text := formatMessageForDiscord(message)
+	params := formatMessageForDiscord(message)
 
-	bot.session.ChannelMessageSend(channel, text)
+	_, err := bot.session.WebhookExecute(
+		config.Current.DiscordWebhookId,
+		config.Current.DiscordWebhookToken,
+		true,
+		&params,
+	)
+
+	if err != nil {
+		fmt.Printf("There was an error sending discord message to %s: %s\n", channel, err.Error())
+	}
 }
 
 func (bot *DiscordBot) OnReceiveMessage(fn func(m *discordgo.MessageCreate)) {
@@ -102,9 +121,8 @@ func (bot *DiscordBot) OnReceiveMessage(fn func(m *discordgo.MessageCreate)) {
 
 func messageListen(fn func(m *discordgo.MessageCreate)) func(s *discordgo.Session, m *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		// Ignore all messages created by the bot itself
-		// This isn't required in this specific example but it's a good practice.
-		if m.Author.ID == s.State.User.ID {
+		// Ignore all messages created by the bot itself or by the webhook
+		if m.Author.ID == s.State.User.ID || (m.Author.ID == m.WebhookID && m.WebhookID == config.Current.DiscordWebhookId) {
 			return
 		}
 
