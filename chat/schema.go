@@ -2,6 +2,8 @@ package chat
 
 import (
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type PubSubPostMessage struct {
@@ -31,6 +33,7 @@ type ChatRoom struct {
 }
 
 type ChatMessage struct {
+	RoomID               string
 	Time                 time.Time
 	Message              string
 	From                 string
@@ -38,8 +41,41 @@ type ChatMessage struct {
 	Privately            bool
 	SpeechMode           string
 	IsSystemMessage      bool
-	SystemMessageSubject ChatUser
+	SystemMessageSubject *ChatUser
 	FromDiscord          bool
+	InvolvedUsers        []ChatUser
+}
+
+func (m *ChatMessage) GetFrom() *ChatUser {
+	if m.From == "" {
+		return nil
+	}
+
+	user, found := lo.Find(m.InvolvedUsers, func(u ChatUser) bool {
+		return u.ID == m.From
+	})
+
+	if !found {
+		return nil
+	}
+
+	return &user
+}
+
+func (m *ChatMessage) GetTo() *ChatUser {
+	if m.To == "" {
+		return nil
+	}
+
+	user, found := lo.Find(m.InvolvedUsers, func(u ChatUser) bool {
+		return u.ID == m.To
+	})
+
+	if !found {
+		return nil
+	}
+
+	return &user
 }
 
 type ChatUser struct {
@@ -49,17 +85,26 @@ type ChatUser struct {
 	DiscordId string
 	IsAdmin   bool
 	RoomId    string
+	IsWebUser bool
 }
 
 func (user ChatUser) IsDiscordUser() bool {
 	return user.DiscordId != ""
 }
 
-type UserListUpdatedEvent struct {
-	RoomId string
+type ChatMessageEvent struct {
+	Message *ChatMessage
 }
 
-type ChatEvent struct {
-	Message          *ChatMessage
-	IsUserListUpdate bool
+type ChatUserJoinedEvent struct {
+	User ChatUser
+}
+
+type ChatUserLeftEvent struct {
+	User ChatUser
+}
+
+type ChatUserKickedEvent struct {
+	UserID  string
+	Message string
 }

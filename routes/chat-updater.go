@@ -13,8 +13,15 @@ import (
 func waitForChatEvent(roomId string, combinedId string, cb func(messageUpdates bool, userListUpdates bool)) {
 	select {
 	case val := <-chat.RoomEvents[roomId].Subscribe(combinedId):
-		data := val.(chat.ChatEvent)
-		cb(data.Message != nil, data.IsUserListUpdate)
+		switch val.(type) {
+		case chat.ChatUserJoinedEvent:
+			cb(false, true)
+		case chat.ChatUserLeftEvent:
+			cb(false, true)
+		case chat.ChatMessageEvent:
+			cb(true, false)
+		}
+
 		break
 	case <-time.After(chat.UPDATER_WAIT_TIMEOUT_MS * time.Millisecond):
 		cb(false, false)
@@ -49,17 +56,23 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 	combinedId := chat.GetCombinedId(roomId, userId)
 	room, found := chat.GetSingleRoom(roomId)
 
-	if !found {
+	user, hasUser := chat.GetUser(combinedId)
+
+	if !found || !hasUser {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	if floodcontrol.IsIPBanned(c) {
-		chat.SendMessage(roomId, &chat.ChatMessage{
-			Time:            time.Now().UTC(),
-			Message:         "{nickname} was kicked for flooding the channel too many times.",
-			IsSystemMessage: true,
-			SpeechMode:      chat.MODE_SAY_TO,
+	sessionUserState := NewSessionUserState(c, session)
+
+	if floodcontrol.IsIPBanned(sessionUserState.GetUserIP()) {
+		chat.SendMessage(&chat.ChatMessage{
+			RoomID:               roomId,
+			Time:                 time.Now().UTC(),
+			Message:              "{nickname} was kicked for flooding the channel too many times.",
+			IsSystemMessage:      true,
+			SystemMessageSubject: &user,
+			SpeechMode:           chat.MODE_SAY_TO,
 		})
 
 		chat.DeregisterUser(combinedId)
@@ -94,5 +107,7 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 		result <- data
 	})
 
-	c.HTML(http.StatusOK, "chat-updater.html", <-result)
+	r := <-result
+
+	c.HTML(http.StatusOK, "chat-updater.html", r)
 }

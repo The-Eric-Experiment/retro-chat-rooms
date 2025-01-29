@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-func writeNickname(b *strings.Builder, user chat.ChatUser) {
+func writeNickname(b *strings.Builder, user *chat.ChatUser) {
 	b.WriteString("<strong>")
 
-	if user.ID == "" {
+	if user == nil || user.ID == "" {
 		b.WriteString("Everyone")
 	} else {
 		b.WriteString("<font color=\"")
@@ -23,7 +23,7 @@ func writeNickname(b *strings.Builder, user chat.ChatUser) {
 	b.WriteString("</strong> ")
 }
 
-func wrapNicknameWithLink(b *strings.Builder, user chat.ChatUser) string {
+func wrapNicknameWithLink(b *strings.Builder, user *chat.ChatUser) string {
 	var buffer strings.Builder
 
 	buffer.WriteString(`<a href="`)
@@ -35,7 +35,7 @@ func wrapNicknameWithLink(b *strings.Builder, user chat.ChatUser) string {
 	return buffer.String()
 }
 
-func RenderUsername(userId string, user chat.ChatUser) template.HTML {
+func RenderUsername(userId string, user *chat.ChatUser) template.HTML {
 	var buffer strings.Builder
 
 	writeNickname(&buffer, user)

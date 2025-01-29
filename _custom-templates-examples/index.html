@@ -1,0 +1,32 @@
+{{ template "layout-top" . }}
+<table
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  bgcolor="{{.Color}}"
+  width="600"
+>
+  <tr>
+    <td>
+      <table cellspacing="0" cellpadding="5" border="0">
+        <tr>
+          <td>
+            <font size="2" face="arial,helvetica" color="{{.TextColor}}"
+              ><strong>Welcome</strong></font
+            ><br />
+            <font size="6" face="arial,helvetica" color="{{.TextColor}}"
+              ><strong>Choose a chat room to join!</strong>
+            </font>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<br />
+{{ template "chat-rooms" . }}
+<br />
+<br />
+<h3>Current Browser Support</h3>
+<br />
+{{ template "browser-support" . }} {{ template "layout-bottom" . }}

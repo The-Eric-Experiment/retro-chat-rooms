@@ -1,72 +1,71 @@
 {{ define "browser-support" }}
 
 <table border="2" cellspacing="2" cellpadding="2" width="100%">
-    <thead>
-        <tr>
-            <th>Browser</th>
-            <th colspan="3">Version/Support</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><b>Netscape</b></td>
-            <td bgcolor="#FF0000">~1</td>
-            <td bgcolor="#FFFF00">2**</td>
-            <td bgcolor="#00FF00">3+</td>
-        </tr>
-        <tr>
-            <td><b>Internet Explorer</b></td>
-            <td bgcolor="#FF0000">~2</td>
-            <td bgcolor="#FFFF00">3<strong>*</strong></td>
-            <td bgcolor="#00FF00">4+</td>
-        </tr>
-        <tr>
-            <td><b>Opera</b></td>
-            <td bgcolor="#FF0000">2.12</td>
-            <td bgcolor="#00FF00">3~4<strong>*</strong></td>
-            <td bgcolor="#00FF00">5+</td>
-        </tr>
-        <tr>
-            <td><b>PlanetWeb for Dreamcast</b></td>
-            <td bgcolor="#FF0000">3.0</td>
-            <td colspan="2"></td>
-        </tr>
-        <tr>
-            <td><b>K-Meleon</b></td>
-            <td bgcolor="#00FF00">0.6</td>
-            <td colspan="2"></td>
-        </tr>
-        <tr>
-            <td><b>Chrome</b></td>
-            <td bgcolor="#00FF00">all</td>
-            <td colspan="2"></td>
-        </tr>
-        <tr>
-            <td><b>Firefox</b></td>
-            <td bgcolor="#00FF00">all</td>
-            <td colspan="2"></td>
-        </tr>
-        <tr>
-            <td><b>Edge</b></td>
-            <td bgcolor="#00FF00">all</td>
-            <td colspan="2"></td>
-        </tr>
-    </tbody>
+  <thead>
+    <tr>
+      <th>Browser</th>
+      <th colspan="3">Version/Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Netscape</b></td>
+      <td bgcolor="#FF0000">~1</td>
+      <td bgcolor="#FFFF00">2**</td>
+      <td bgcolor="#00FF00">3+</td>
+    </tr>
+    <tr>
+      <td><b>Internet Explorer</b></td>
+      <td bgcolor="#FF0000">~2</td>
+      <td bgcolor="#FFFF00">3<strong>*</strong></td>
+      <td bgcolor="#00FF00">4+</td>
+    </tr>
+    <tr>
+      <td><b>Opera</b></td>
+      <td bgcolor="#FF0000">2.12,3</td>
+      <td bgcolor="#00FF00" colspan="2">4<strong>*</strong>, 5+</td>
+    </tr>
+    <tr>
+      <td><b>PlanetWeb for Dreamcast</b></td>
+      <td bgcolor="#FF0000">3.0</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td><b>K-Meleon</b></td>
+      <td bgcolor="#00FF00">0.6</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td><b>Chrome</b></td>
+      <td bgcolor="#00FF00">all</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td><b>Firefox</b></td>
+      <td bgcolor="#00FF00">all</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td><b>Edge</b></td>
+      <td bgcolor="#00FF00">all</td>
+      <td colspan="2"></td>
+    </tr>
+  </tbody>
 </table>
 <font size="-1">
-    * It uses a polling mechanism istead of keep-alive as the update method
-    <br>** Currently a work in progress
-    <br>*** Browsers not listed above haven't been tested.<br>
+  * It uses a polling mechanism istead of keep-alive as the update method
+  <br />** Currently a work in progress <br />*** Browsers not listed above
+  haven't been tested.<br />
 </font>
 <table border="2" cellspacing="2" cellpadding="2" width="100%">
-    <tr>
-        <th colspan="3">Scale</th>
-    </tr>
-    <tr>
-        <td bgcolor="#FF0000">Doesn't work</td>
-        <td bgcolor="#FFFF00">Partially working</td>
-        <td bgcolor="#00FF00">Fully Working</td>
-    </tr>
+  <tr>
+    <th colspan="3">Scale</th>
+  </tr>
+  <tr>
+    <td bgcolor="#FF0000">Doesn't work</td>
+    <td bgcolor="#FFFF00">Partially working</td>
+    <td bgcolor="#00FF00">Fully Working</td>
+  </tr>
 </table>
-<br><br>
+<br /><br />
 {{end}}

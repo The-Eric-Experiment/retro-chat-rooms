@@ -3,11 +3,7 @@ package routes
 import (
 	"log"
 	"net/http"
-	"regexp"
 	"retro-chat-rooms/chat"
-	"retro-chat-rooms/config"
-	"retro-chat-rooms/floodcontrol"
-	"retro-chat-rooms/profanity"
 	"strconv"
 	"strings"
 
@@ -56,14 +52,6 @@ func getJoinData(room chat.ChatRoom, postUrl string, errors []string) *gin.H {
 	}
 }
 
-func isNickVariation(input string, against string) bool {
-	m1 := regexp.MustCompile(`[\s_-]+`)
-	inputStr := m1.ReplaceAllString(strings.ToLower(strings.TrimSpace(input)), "")
-	againstStr := m1.ReplaceAllString(strings.ToLower(strings.TrimSpace(against)), "")
-
-	return inputStr == againstStr
-}
-
 func GetJoin(c *gin.Context) {
 	roomId := c.Param("id")
 	room, found := chat.GetSingleRoom(roomId)
@@ -92,44 +80,27 @@ func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoo
 
 	errors := make([]string, 0)
 
-	if floodcontrol.IsIPBanned(c) {
-		errors = append(errors, "You have been temporarily kicked out for flooding, try again later.")
-	}
+	sessionUserState := NewSessionUserState(c, session)
 
-	if nickname == "" {
-		errors = append(errors, "No nickname was entered in the form.")
-	}
-
-	validNickname, err := regexp.MatchString(`^[a-zA-Z0-9\s_-]+$`, nickname)
-
-	if !validNickname || err != nil {
-		errors = append(errors, "Only alpha-numeric characters, spaces, underscores and dashes are allowed in nicknames")
-	}
-
-	if profanity.IsProfaneNickname(nickname) {
-		errors = append(errors, "This nickname is not allowed.")
+	newUser := chat.ChatUser{
+		RoomId:    room.ID,
+		ID:        chat.GetCombinedId(room.ID, userId.(string)),
+		Nickname:  nickname,
+		Color:     color,
+		DiscordId: "",
+		IsAdmin:   false,
+		IsWebUser: true,
 	}
 
 	if sessionCaptcha == nil || sessionCaptcha.(string) != captcha {
 		errors = append(errors, "The entered captcha is invalid.")
 	}
 
-	isOwnerVariation := isNickVariation(config.Current.OwnerChatUser.Nickname, nickname)
-
-	if isOwnerVariation {
-		errors = append(errors, "Someone is already using this Nickname, try a different one.")
-	}
+	chat.ValidateUser(&sessionUserState, newUser, &errors)
 
 	// YUCK THESE IFS
 	if len(errors) == 0 {
-		_, err := chat.RegisterUser(chat.ChatUser{
-			RoomId:    room.ID,
-			ID:        chat.GetCombinedId(room.ID, userId.(string)),
-			Nickname:  nickname,
-			Color:     color,
-			DiscordId: "",
-			IsAdmin:   false,
-		})
+		_, err := chat.RegisterUser(newUser)
 		if err != nil && err.Error() == "user exists" {
 			errors = append(errors, "Someone is already using this Nickname, try a different one.")
 		} else if err != nil {

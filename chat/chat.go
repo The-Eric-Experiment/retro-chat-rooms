@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/samber/lo"
 )
@@ -58,11 +57,11 @@ func determineTextColor(color string) string {
 	return "#FFFFFF"
 }
 
-func userListUpdated(roomId string) {
+func userListUpdated(roomId string, event interface{}) {
 	defer mutex.Unlock()
 	mutex.Lock()
-	roomLastUserListChange[roomId] = helpers.Now()
-	RoomEvents[roomId].Publish(ChatEvent{IsUserListUpdate: true})
+	roomLastUserListChange[roomId] = helpers.Now().UTC()
+	RoomEvents[roomId].Publish(event)
 }
 
 func instantiateUser(user ChatUser) error {
@@ -77,6 +76,13 @@ func instantiateUser(user ChatUser) error {
 
 	if found {
 		return errors.New("user exists")
+	}
+
+	comparisonNickname := strings.Trim(strings.ToLower(user.Nickname), " ")
+	for _, u := range users {
+		if strings.Trim(strings.ToLower(u.Nickname), " ") == comparisonNickname {
+			return errors.New("nickname selected")
+		}
 	}
 
 	users[user.ID] = user
@@ -116,13 +122,13 @@ func removeUser(combinedId string) ChatUser {
 }
 
 func GetCombinedId(roomId string, userId string) string {
-	return uuid.NewMD5(uuid.NameSpaceOID, []byte(roomId+userId)).String()
+	return helpers.GenerateUniqueID(roomId + userId)
 }
 
 func RegisterAdmin(roomId string) string {
 	cfg := config.Current.OwnerChatUser
 
-	combinedId := GetCombinedId(roomId, cfg.Id)
+	combinedId := helpers.GenerateUniqueID(roomId + cfg.Id)
 
 	_, found := users[combinedId]
 
@@ -137,6 +143,7 @@ func RegisterAdmin(roomId string) string {
 		DiscordId: cfg.DiscordId,
 		IsAdmin:   true,
 		RoomId:    roomId,
+		IsWebUser: false,
 	})
 
 	return combinedId
@@ -275,32 +282,36 @@ func RegisterUser(user ChatUser) (string, error) {
 	userMessages[user.ID] = append(userMessages[user.ID], roomMessageHistory[user.RoomId]...)
 
 	if user.DiscordId == "" {
-		SendMessage(user.RoomId, &ChatMessage{
+		SendMessage(&ChatMessage{
+			RoomID:               user.RoomId,
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} has joined the room!",
 			IsSystemMessage:      true,
-			SystemMessageSubject: user,
+			SystemMessageSubject: &user,
 			Privately:            false,
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,
 			To:                   "",
+			InvolvedUsers:        []ChatUser{user},
 		})
 
 		room, found := GetSingleRoom(user.RoomId)
-		if found && room.IntroMessage != "" {
-			SendMessage(user.RoomId, &ChatMessage{
+		if found && room.IntroMessage != "" && user.IsWebUser {
+			SendMessage(&ChatMessage{
+				RoomID:               room.ID,
 				Time:                 time.Now().UTC(),
 				Message:              room.IntroMessage,
 				IsSystemMessage:      true,
-				SystemMessageSubject: user,
+				SystemMessageSubject: &user,
 				Privately:            true,
 				SpeechMode:           SPEECH_MODES[0].Value,
 				From:                 user.ID,
 				To:                   user.ID,
+				InvolvedUsers:        []ChatUser{user},
 			})
 		}
 
-		userListUpdated(user.RoomId)
+		userListUpdated(user.RoomId, ChatUserJoinedEvent{User: user})
 	}
 
 	return user.ID, nil
@@ -310,26 +321,29 @@ func DeregisterUser(combinedId string) {
 	user := removeUser(combinedId)
 
 	if user.ID != "" && user.DiscordId == "" {
-		SendMessage(user.RoomId, &ChatMessage{
+		SendMessage(&ChatMessage{
+			RoomID:               user.RoomId,
 			Time:                 time.Now().UTC(),
 			Message:              "{nickname} has left the room!",
 			IsSystemMessage:      true,
-			SystemMessageSubject: user,
+			SystemMessageSubject: &user,
 			Privately:            false,
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,
 			To:                   "",
+			InvolvedUsers:        []ChatUser{user},
 		})
 
-		userListUpdated(user.RoomId)
+		userListUpdated(user.RoomId, ChatUserLeftEvent{User: user})
 	}
+
 }
 
-func SendMessage(roomId string, message *ChatMessage) {
+func SendMessage(message *ChatMessage) {
 	defer mutex.Unlock()
 	mutex.Lock()
 
-	for _, combinedId := range roomUsers[roomId] {
+	for _, combinedId := range roomUsers[message.RoomID] {
 		if message.Privately && message.To != "" && (message.To != combinedId && message.From != combinedId) {
 			continue
 		}
@@ -340,16 +354,16 @@ func SendMessage(roomId string, message *ChatMessage) {
 	// Keeps a brief history of the public messages in the room so new people who login
 	// See some activity on the chat.
 	if !message.Privately || message.To == "" {
-		messages := roomMessageHistory[roomId]
-		if len(roomMessageHistory[roomId]) >= MAX_ROOM_MESSAGE_HISTORY {
+		messages := roomMessageHistory[message.RoomID]
+		if len(roomMessageHistory[message.RoomID]) >= MAX_ROOM_MESSAGE_HISTORY {
 			initial := len(messages) - MAX_ROOM_MESSAGE_HISTORY + 1
 			messages = messages[initial:]
 		}
 
-		roomMessageHistory[roomId] = append(messages, message)
+		roomMessageHistory[message.RoomID] = append(messages, message)
 	}
 
-	RoomEvents[roomId].Publish(ChatEvent{Message: message})
+	RoomEvents[message.RoomID].Publish(ChatMessageEvent{Message: message})
 }
 
 func Ping(combinedId string) {

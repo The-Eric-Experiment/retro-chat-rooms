@@ -29,6 +29,8 @@ type Config struct {
 	ChatRoomHeaderLogo   string              `yaml:"chat-room-header-logo"`
 	ChatRoomHeaderHeight string              `yaml:"chat-room-header-height"`
 	DiscordBotToken      string              `yaml:"discord-bot-token"`
+	DiscordWebhookId     string              `yaml:"discord-webhook-id"`
+	DiscordWebhookToken  string              `yaml:"discord-webhook-token"`
 	OwnerChatUser        OwnerChatUserConfig `yaml:"owner-chat-user"`
 	Rooms                []ConfigChatRoom    `yaml:"rooms"`
 }

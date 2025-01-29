@@ -8,6 +8,7 @@ import (
 	"retro-chat-rooms/discord"
 	"retro-chat-rooms/profanity"
 	"retro-chat-rooms/routes"
+	"retro-chat-rooms/sockets"
 	"retro-chat-rooms/tasks"
 	"retro-chat-rooms/templates"
 
@@ -68,6 +69,8 @@ func main() {
 	{
 		group.GET("/rooms", api.GetRooms)
 	}
+
+	go sockets.ServeSockets("8081")
 
 	log.Panicln(router.Run())
 	fmt.Println("closing...")

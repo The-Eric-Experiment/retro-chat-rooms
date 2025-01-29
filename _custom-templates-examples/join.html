@@ -1,0 +1,47 @@
+{{ template "layout-top" . }}
+<table
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  bgcolor="{{.Color}}"
+  width="600"
+>
+  <tr>
+    <td>
+      <table cellspacing="0" cellpadding="5" border="0">
+        <tr>
+          <td>
+            <font size="2" face="arial,helvetica" color="{{.TextColor}}"
+              ><strong>Join the</strong></font
+            ><br />
+            <font size="6" face="arial,helvetica" color="{{.TextColor}}"
+              ><strong>{{ .Name }} Chat Room</strong> </font
+            ><br />
+            <font size="2" face="arial,helvetica" color="{{.TextColor}}"
+              >{{ .Description }}</font
+            >
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td bgcolor="#003399">
+      <img
+        src="//www.oldavista.com/assets/pixel.gif"
+        width="1"
+        height="2"
+        border="0"
+      />
+    </td>
+  </tr>
+</table>
+<br />
+<table cellspacing="0" cellpadding="0" border="0" width="600">
+  <tr>
+    <td width="400" valign="top">{{ template "chat-login" . }}</td>
+    <td width="10"></td>
+    <td width="190" bgcolor="#f9f9f9" valign="top"></td>
+  </tr>
+</table>
+{{ template "layout-bottom" . }}

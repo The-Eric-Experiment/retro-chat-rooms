@@ -33,8 +33,5 @@ func PostLogout(c *gin.Context, session sessions.Session) {
 		suportsChatEventAwaiter = true
 	}
 
-	c.HTML(http.StatusOK, "logout.html", gin.H{
-		"SupportsEventAwaiter": suportsChatEventAwaiter,
-		"ID":                   roomId,
-	})
+	c.Redirect(http.StatusFound, UrlJoin(roomId))
 }

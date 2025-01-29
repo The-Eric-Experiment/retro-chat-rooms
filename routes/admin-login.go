@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func GetAdminLogin(c *gin.Context) {
@@ -32,7 +31,7 @@ func PostAdminLogin(c *gin.Context, session sessions.Session) {
 		return
 	}
 
-	isOwnerVariation := isNickVariation(config.Current.OwnerChatUser.Nickname, nick)
+	isOwnerVariation := chat.IsNickVariation(config.Current.OwnerChatUser.Nickname, nick)
 
 	hasher := sha1.New()
 	hasher.Write([]byte(pass))
@@ -57,7 +56,6 @@ func PostAdminLogin(c *gin.Context, session sessions.Session) {
 	combinedId := chat.GetCombinedId(roomId, userId.(string))
 
 	if userId == nil || combinedId != registeredUserId {
-		combinedId = uuid.NewString()
 		session.Set("userId", config.Current.OwnerChatUser.Id)
 		session.Save()
 	}
