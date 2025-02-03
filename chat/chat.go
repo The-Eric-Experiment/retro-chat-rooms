@@ -144,6 +144,7 @@ func RegisterAdmin(roomId string) string {
 		IsAdmin:   true,
 		RoomId:    roomId,
 		IsWebUser: false,
+		Client:    "",
 	})
 
 	return combinedId

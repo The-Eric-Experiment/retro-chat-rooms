@@ -52,6 +52,8 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 			Color:     chat.USER_COLOR_BLACK,
 			DiscordId: m.Author.ID,
 			IsAdmin:   false,
+			IsWebUser: false,
+			Client:    "env:(Discord)",
 		}
 		chat.RegisterUser(user)
 	}

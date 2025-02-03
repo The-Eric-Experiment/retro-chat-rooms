@@ -37,6 +37,7 @@ type RegisterUser struct {
 	Nickname string `fieldOrder:"0"`
 	Color    string `fieldOrder:"1"`
 	RoomID   string `fieldOrder:"2"`
+	Client   string `fieldOrder:"3"`
 }
 
 type RegisterUserResponse struct {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"log"
 	"retro-chat-rooms/api"
@@ -26,6 +27,8 @@ func routeWithSession(fn func(ctx *gin.Context, session sessions.Session)) func(
 }
 
 func main() {
+	gob.Register(map[string]string{})
+
 	profanity.LoadProfanityFilters()
 
 	chat.InitializeRooms()
@@ -39,6 +42,12 @@ func main() {
 	router := gin.Default()
 
 	store := cookie.NewStore([]byte("secret1"))
+	store.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 365,
+		HttpOnly: true,
+		Secure:   false, // Change to true if using HTTPS
+	})
 	router.Use(sessions.Sessions("chatsession", store))
 
 	router.Use(static.Serve("/public", static.LocalFile("./public", true)))
@@ -47,10 +56,8 @@ func main() {
 
 	// Chat login
 	router.GET("/", routes.GetIndex)
-	router.POST("/", routeWithSession(routes.PostIndex))
-	router.GET("/join/:id", routes.GetJoin)
+	router.GET("/join/:id", routeWithSession(routes.GetJoin))
 	router.POST("/join/:id", routeWithSession(routes.PostJoin))
-	router.GET("/chaptcha", routeWithSession(routes.GetChaptcha))
 	router.POST("/logout", routeWithSession(routes.PostLogout))
 	router.GET("/admin-login", routes.GetAdminLogin)
 	router.POST("/admin-login", routeWithSession(routes.PostAdminLogin))

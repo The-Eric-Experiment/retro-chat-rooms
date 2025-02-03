@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/samber/lo"
 )
 
 type IUserState interface {
@@ -21,55 +19,6 @@ type IUserState interface {
 	GetLastScream() time.Time
 	SetLastScream(t time.Time)
 	GetUserIP() string
-}
-
-func checkForMessageAbuse(user ChatUser) bool {
-	// Ignore checks for Discord users or admins
-	if user.IsDiscordUser() || user.IsAdmin {
-		return false
-	}
-
-	// Retrieve messages sent by the user
-	messages, found := GetMessagesByUser(user.ID)
-	if !found {
-		return false
-	}
-
-	// Filter out system messages and only include user messages
-	messages = lo.Filter(messages, func(m *ChatMessage, _ int) bool {
-		return !m.IsSystemMessage && m.From == user.ID
-	})
-
-	// Check if we have enough messages to evaluate flood control
-	if len(messages) < floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT {
-		return false
-	}
-
-	// Find the most recent message
-	lastMessage := messages[len(messages)-1]
-
-	// Only consider messages within the last `MESSAGE_FLOOD_RANGE_SEC`
-	thresholdTime := lastMessage.Time.Add(-time.Duration(floodcontrol.MESSAGE_FLOOD_RANGE_SEC) * time.Second)
-	relevantMessages := lo.Filter(messages, func(m *ChatMessage, _ int) bool {
-		return m.Time.After(thresholdTime)
-	})
-
-	// If there are fewer than the required count, no flood
-	if len(relevantMessages) < floodcontrol.MESSAGE_FLOOD_MESSAGES_COUNT {
-		return false
-	}
-
-	// Ensure the cooldown period has passed since the last message in the flood
-	firstFloodMessage := relevantMessages[0] // The first message in the flood
-	cooldownEnd := firstFloodMessage.Time.Add(time.Duration(floodcontrol.MESSAGE_FLOOD_COOLDOWN_SEC) * time.Second)
-
-	// If the cooldown has expired and no further flood occurred, it's not abuse
-	if time.Now().After(cooldownEnd) {
-		return false
-	}
-
-	// Otherwise, the user is still in a restricted state
-	return true
 }
 
 // substringPercentage finds the start and end index of a substring within a larger string

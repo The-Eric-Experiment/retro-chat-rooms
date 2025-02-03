@@ -135,6 +135,7 @@ func registerUser(conn ISocket, msg string) {
 		DiscordId: "",
 		IsAdmin:   false,
 		IsWebUser: false,
+		Client:    content.Client,
 	}
 
 	chat.ValidateUser(&socketUserState, newUser, &errors)

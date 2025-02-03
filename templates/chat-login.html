@@ -32,27 +32,27 @@
   </table>
   <table width="400" cellspacing="0" cellpadding="2" border="0">
     <tr valign="top">
-      <td>
+      <td valign="middle">
         <b>
-          <font face="Verdana,Arial" size="-1">Please sum the numbers in the input below:</font>
-        </b><br /><br />
-        <input type="text" name="chap" value="" cols="30" /><br />
-        <font size="1" face="Verdana,Arial">If you have difficulty solving it, please refresh the page to
-          get a new one.</font>
+          <font face="Verdana,Arial" size="-1">
+            Please enter {{ .CaptchaA }} plus the current day of the month in the west coast of 'murica
+          </font>
+        </b>
       </td>
-      <td><img src="{{ urlCaptcha }}" alt="" width="220" height="122" /></td>
+      <td valign="middle"><input type="text" name='{{ index .FieldNames "captcha" }}' value="" cols="5" /></td>
     </tr>
     <tr>
       <td colspan="2" align="center" height="80">
         <table border="0">
           <tr>
             <td>
-              <font face="Verdana,Arial" size="-1"><b>Enter a nickname:</b></font><br /><input type="text" name="ni"
-                value="" cols="18" />
+              <font face="Verdana,Arial" size="-1"><b>Enter a nickname:</b></font><br />
+              <input type="text" name='{{ index .FieldNames "nickname" }}' value="" cols="18" />
             </td>
             <td>&nbsp;</td>
             <td>
-              <font face="Verdana,Arial" size="-1"><b>Nickname color:</b></font><br /><select name="co" class="select">
+              <font face="Verdana,Arial" size="-1"><b>Nickname color:</b></font><br />
+              <select name='{{ index .FieldNames "color" }}' class="select">
                 {{range $i, $c := .Colors}}
                 <option value="{{ $c.Color }}" style="color: {{ $c.Color }};" {{if eq $i 0}}selected{{end}}>
                   {{$c.Name}}

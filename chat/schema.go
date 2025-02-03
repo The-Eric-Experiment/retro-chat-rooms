@@ -86,6 +86,7 @@ type ChatUser struct {
 	IsAdmin   bool
 	RoomId    string
 	IsWebUser bool
+	Client    string
 }
 
 func (user ChatUser) IsDiscordUser() bool {
