@@ -64,6 +64,7 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 	match := messageMentionExpr.FindStringSubmatch(m.Content)
 
 	var to string = ""
+	involvedUsers := []chat.ChatUser{user}
 
 	if len(match) > 1 {
 		content = match[2]
@@ -71,6 +72,7 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 
 		if found {
 			to = toUser.ID
+			involvedUsers = append(involvedUsers, toUser)
 		}
 	}
 
@@ -83,5 +85,6 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 		To:              to,
 		IsSystemMessage: false,
 		FromDiscord:     true,
+		InvolvedUsers:   involvedUsers,
 	})
 }
