@@ -218,6 +218,14 @@ func ValidateUser(userState IUserState, user ChatUser, errors *[]string) {
 		*errors = append(*errors, "Only alpha-numeric characters, spaces, underscores and dashes are allowed in nicknames.")
 	}
 
+	if len(user.Nickname) < 3 {
+		*errors = append(*errors, "Nickname must be at least 3 characters long.")
+	}
+
+	if len(user.Nickname) > 20 {
+		*errors = append(*errors, "Nickname must be no more than 20 characters long.")
+	}
+
 	if profanity.IsProfaneNickname(user.Nickname) {
 		*errors = append(*errors, "This nickname is not allowed.")
 	}

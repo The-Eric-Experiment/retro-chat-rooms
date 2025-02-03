@@ -142,9 +142,7 @@ func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoo
 	if sessionCaptcha == nil || strconv.Itoa(sessionCaptcha.(int)) != captchaInput {
 		errors = append(errors, "The entered captcha is invalid.")
 	}
-	if len(nickname) < 3 {
-		errors = append(errors, "Nickname must be at least 3 characters long.")
-	}
+
 	sessionUserState := NewSessionUserState(c, session)
 
 	browserFamily, browserMajor := parseUserAgent(c.GetHeader("User-Agent"))
