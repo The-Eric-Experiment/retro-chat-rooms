@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.18-alpine
+FROM golang:1.22.11-alpine
 
 RUN apk add --no-cache git
 RUN apk add build-base
@@ -17,5 +17,6 @@ COPY . .
 RUN go build .
 
 EXPOSE 8080
+EXPOSE 8081
 
 CMD [ "./retro-chat-rooms" ]
