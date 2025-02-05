@@ -117,6 +117,18 @@ func PushMessage(conn ISocket, msg chat.ChatMessage, isHistory bool) {
 	conn.Write(response)
 }
 
+func PushServerTime(conn ISocket) {
+	now := time.Now()
+
+	message := ServerTimeMessage{
+		Time: now.Format("03:04:05 PM"),
+	}
+
+	response := SerializeMessage(SERVER_TIME, &message)
+
+	conn.Write(response)
+}
+
 func registerUser(conn ISocket, msg string) {
 	content := DeserializeMessage(RegisterUser{}, msg)
 

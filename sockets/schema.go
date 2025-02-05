@@ -80,3 +80,7 @@ type ServerMessageSent struct {
 	IsHistory            string `fieldOrder:"8"`
 	Message              string `fieldOrder:"9"`
 }
+
+type ServerTimeMessage struct {
+	Time string `fieldOrder:"0"`
+}

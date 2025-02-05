@@ -10,6 +10,7 @@ import (
 	"retro-chat-rooms/pubsub"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -86,16 +87,24 @@ func (ns *NativeSockets) GetClientIP() string {
 }
 
 func observeRoomEvents(connection ISocket, events pubsub.Pubsub, ctx context.Context) {
+	// Ticker for sending server time
+	ticker := time.NewTicker(SERVER_TIME_MIN * time.Minute)
+	defer ticker.Stop()
 	c := events.Subscribe(connection.ID())
 	defer func() {
 		events.Unsubscribe(connection.ID())
 	}()
+
+	go PushServerTime(connection)
 
 	for {
 		select {
 		case <-ctx.Done():
 			fmt.Println("Context canceled in observeRoomEvents")
 			return
+		// Send Server Time
+		case <-ticker.C:
+			PushServerTime(connection)
 		case message := <-c:
 			switch evt := message.(type) {
 
