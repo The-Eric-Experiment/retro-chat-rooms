@@ -21,8 +21,15 @@ func writeMessage(b *strings.Builder, msg *chat.ChatMessage) {
 		return
 	}
 
+	var buffer strings.Builder
+	if msg.ShowClientIcon {
+		writeClientIcon(&buffer, msg.SystemMessageSubject.Client)
+		buffer.WriteString("&nbsp;")
+	}
+	buffer.WriteString("<strong><font color=\"" + msg.SystemMessageSubject.Color + "\">" + msg.SystemMessageSubject.Nickname + "</font></strong>")
+
 	b.WriteString(
-		strings.ReplaceAll(msg.Message, "{nickname}", "<strong><font color=\""+msg.SystemMessageSubject.Color+"\">"+msg.SystemMessageSubject.Nickname+"</font></strong>"),
+		strings.ReplaceAll(msg.Message, "{nickname}", buffer.String()),
 	)
 }
 
@@ -30,12 +37,17 @@ func writeUserMessageDescriptor(b *strings.Builder, speechMode string, message *
 	from := message.GetFrom()
 	to := message.GetTo()
 
+	if message.ShowClientIcon {
+		writeClientIcon(b, from.Client)
+		b.WriteString("&nbsp;")
+	}
 	writeNickname(b, from)
 	if message.Privately {
 		b.WriteString("<i>privately</i> ")
 	}
 	b.WriteString(speechMode)
 	b.WriteString(" ")
+
 	writeNickname(b, to)
 	b.WriteString(": ")
 	messageRendered()

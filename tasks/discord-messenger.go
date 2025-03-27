@@ -16,7 +16,7 @@ func observeRoomMessages(roomId string, events pubsub.Pubsub) {
 		switch evt := message.(type) {
 		case chat.ChatMessageEvent:
 			msg := evt.Message
-			if msg != nil && !msg.FromDiscord && !msg.IsSystemMessage {
+			if msg != nil && msg.Source != chat.MSG_SOURCE_DISCORD && !msg.IsSystemMessage {
 				room, _ := chat.GetSingleRoom(roomId)
 				if room.DiscordChannel != "" {
 					discord.Instance.SendMessage(room.DiscordChannel, msg)
@@ -52,8 +52,9 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 			Color:     chat.USER_COLOR_BLACK,
 			DiscordId: m.Author.ID,
 			IsAdmin:   false,
-			IsWebUser: false,
-			Client:    "env:(Discord)",
+			Client: chat.ClientInfo{
+				Plat: chat.CLIENT_PLATFORM_DISCORD,
+			},
 		}
 		chat.RegisterUser(user)
 	}
@@ -84,7 +85,8 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 		SpeechMode:      chat.MODE_SAY_TO,
 		To:              to,
 		IsSystemMessage: false,
-		FromDiscord:     true,
+		Source:          chat.ClientInfoToMsgSource(user.Client),
+		ShowClientIcon:  true,
 		InvolvedUsers:   involvedUsers,
 	})
 }

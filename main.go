@@ -51,6 +51,7 @@ func main() {
 	router.Use(sessions.Sessions("chatsession", store))
 
 	router.Use(static.Serve("/public", static.LocalFile("./public", true)))
+	router.Use(static.Serve("/assets", static.LocalFile("./assets", true)))
 
 	templates.LoadTemplates(router)
 

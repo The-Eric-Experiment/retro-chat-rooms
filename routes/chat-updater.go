@@ -73,6 +73,7 @@ func GetChatUpdater(c *gin.Context, session sessions.Session) {
 			IsSystemMessage:      true,
 			SystemMessageSubject: &user,
 			SpeechMode:           chat.MODE_SAY_TO,
+			ShowClientIcon:       false,
 		})
 
 		chat.DeregisterUser(combinedId)

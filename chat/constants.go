@@ -23,6 +23,14 @@ const (
 	USER_COLOR_ORANGE = "#FFAF00"
 	USER_COLOR_RED    = "#FF0000"
 	USER_COLOR_BLUE   = "#0000FF"
+
+	MSG_SOURCE_WEB        = "web"
+	MSG_SOURCE_WINDOWS_16 = "win16"
+	MSG_SOURCE_DISCORD    = "discord"
+
+	CLIENT_PLATFORM_WEB     = "Web"
+	CLIENT_PLATFORM_DESKTOP = "Desktop"
+	CLIENT_PLATFORM_DISCORD = "Discord"
 )
 
 var SPEECH_MODES = []SpeechMode{

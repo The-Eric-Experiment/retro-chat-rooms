@@ -125,7 +125,7 @@ func GetCombinedId(roomId string, userId string) string {
 	return helpers.GenerateUniqueID(roomId + userId)
 }
 
-func RegisterAdmin(roomId string) string {
+func RegisterAdmin(roomId string, clientInfo ClientInfo) string {
 	cfg := config.Current.OwnerChatUser
 
 	combinedId := helpers.GenerateUniqueID(roomId + cfg.Id)
@@ -143,8 +143,7 @@ func RegisterAdmin(roomId string) string {
 		DiscordId: cfg.DiscordId,
 		IsAdmin:   true,
 		RoomId:    roomId,
-		IsWebUser: false,
-		Client:    "",
+		Client:    clientInfo,
 	})
 
 	return combinedId
@@ -170,7 +169,9 @@ func InitializeRooms() {
 		RoomEvents[room.ID] = pubsub.NewPubsub()
 
 		if config.Current.OwnerChatUser.DiscordId != "" && room.DiscordChannel != "" {
-			RegisterAdmin(room.ID)
+			// TODO: This could be from any client, we
+			// need to determine that on login
+			RegisterAdmin(room.ID, ClientInfo{})
 		}
 	}
 }
@@ -294,10 +295,11 @@ func RegisterUser(user ChatUser) (string, error) {
 			From:                 user.ID,
 			To:                   "",
 			InvolvedUsers:        []ChatUser{user},
+			ShowClientIcon:       true,
 		})
 
 		room, found := GetSingleRoom(user.RoomId)
-		if found && room.IntroMessage != "" && user.IsWebUser {
+		if found && room.IntroMessage != "" && user.Client.Plat == CLIENT_PLATFORM_WEB {
 			SendMessage(&ChatMessage{
 				RoomID:               room.ID,
 				Time:                 time.Now().UTC(),
@@ -308,6 +310,7 @@ func RegisterUser(user ChatUser) (string, error) {
 				SpeechMode:           SPEECH_MODES[0].Value,
 				From:                 user.ID,
 				To:                   user.ID,
+				ShowClientIcon:       false,
 				InvolvedUsers:        []ChatUser{user},
 			})
 		}
@@ -332,6 +335,7 @@ func DeregisterUser(combinedId string) {
 			SpeechMode:           SPEECH_MODES[0].Value,
 			From:                 user.ID,
 			To:                   "",
+			ShowClientIcon:       false,
 			InvolvedUsers:        []ChatUser{user},
 		})
 

@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+func writeClientIcon(b *strings.Builder, client chat.ClientInfo) {
+	b.WriteString(`<img src="/assets/ico_` + chat.ClientInfoToMsgSource(client) + `.gif" alt="` + client.Plat + `">`)
+}
+
 func writeNickname(b *strings.Builder, user *chat.ChatUser) {
 	b.WriteString("<strong>")
 

@@ -42,8 +42,9 @@ type ChatMessage struct {
 	SpeechMode           string
 	IsSystemMessage      bool
 	SystemMessageSubject *ChatUser
-	FromDiscord          bool
+	Source               string
 	InvolvedUsers        []ChatUser
+	ShowClientIcon       bool
 }
 
 func (m *ChatMessage) GetFrom() *ChatUser {
@@ -85,8 +86,7 @@ type ChatUser struct {
 	DiscordId string
 	IsAdmin   bool
 	RoomId    string
-	IsWebUser bool
-	Client    string
+	Client    ClientInfo
 }
 
 func (user ChatUser) IsDiscordUser() bool {
@@ -108,4 +108,15 @@ type ChatUserLeftEvent struct {
 type ChatUserKickedEvent struct {
 	UserID  string
 	Message string
+}
+
+type ClientInfo struct {
+	// Platform (Web, Discord, Desktop)
+	Plat string
+	// Family + Version: Windows 95, Fedora 41
+	OS string
+	// 16-bit, 32-bit if desktop, Browser + Major if Web
+	Env string
+	// App Version
+	Version string
 }

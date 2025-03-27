@@ -111,6 +111,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 			IsSystemMessage:      true,
 			SystemMessageSubject: user,
 			SpeechMode:           MODE_SAY_TO,
+			ShowClientIcon:       false,
 		}, true
 	}
 
@@ -136,6 +137,9 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 			SystemMessageSubject: user,
 			SpeechMode:           MODE_SAY_TO,
 			InvolvedUsers:        []ChatUser{*user},
+			// Showing the source on the user nickname doesn't make sense
+			// for this message
+			Source: "",
 		}, true
 	}
 
@@ -155,6 +159,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 			SystemMessageSubject: user,
 			SpeechMode:           MODE_SAY_TO,
 			InvolvedUsers:        []ChatUser{*user},
+			ShowClientIcon:       false,
 		}, true
 	}
 
@@ -173,6 +178,7 @@ func ValidateMessage(userState IUserState, inputMsg ChatMessage) (ChatMessage, b
 			Privately:            true,
 			SpeechMode:           MODE_SAY_TO,
 			InvolvedUsers:        []ChatUser{*user},
+			ShowClientIcon:       false,
 		}, true
 
 	}

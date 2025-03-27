@@ -109,7 +109,7 @@ func PostChatTalk(c *gin.Context, session sessions.Session) {
 		Privately:       private == "on",
 		SpeechMode:      mode,
 		IsSystemMessage: false,
-		FromDiscord:     false,
+		Source:          chat.ClientInfoToMsgSource(user.Client),
 		InvolvedUsers:   involvedUsers,
 	})
 

@@ -110,6 +110,8 @@ func PushMessage(conn ISocket, msg chat.ChatMessage, isHistory bool) {
 		SystemMessageSubject: SerializeSubObject(systemMessageSubjectUser),
 		Message:              msg.Message,
 		IsHistory:            strconv.FormatBool(isHistory),
+		Source:               chat.ClientInfoToMsgSource(from.Client),
+		ShowClientIcon:       strconv.FormatBool(msg.ShowClientIcon),
 	}
 
 	response := SerializeMessage(SERVER_MESSAGE_SENT, &message)
@@ -146,8 +148,7 @@ func registerUser(conn ISocket, msg string) {
 		RoomId:    content.RoomID,
 		DiscordId: "",
 		IsAdmin:   false,
-		IsWebUser: false,
-		Client:    content.Client,
+		Client:    chat.ExtractClientInfo(content.Client),
 	}
 
 	chat.ValidateUser(&socketUserState, newUser, &errors)
@@ -189,7 +190,12 @@ func registerUser(conn ISocket, msg string) {
 		return
 	}
 
-	response := SerializeMessage(SERVER_USER_REGISTRATION_SUCCESS, &RegisterUserResponse{UserID: userId, Nickname: user.Nickname, Color: user.Color, RoomID: user.RoomId})
+	response := SerializeMessage(SERVER_USER_REGISTRATION_SUCCESS, &RegisterUserResponse{
+		UserID:   userId,
+		Nickname: user.Nickname,
+		Color:    user.Color,
+		RoomID:   user.RoomId,
+	})
 
 	InternalEvents.Publish(InternalUserRegisteredEvent{ConnectionID: conn.ID(), User: user})
 
@@ -241,8 +247,8 @@ func sendMessage(conn ISocket, msg string) {
 		Privately:            privately,
 		SpeechMode:           content.SpeechMode,
 		IsSystemMessage:      false,
-		FromDiscord:          false,
 		SystemMessageSubject: &user,
+		Source:               chat.ClientInfoToMsgSource(user.Client),
 		InvolvedUsers:        involvedUsers,
 	})
 
@@ -277,6 +283,10 @@ func colorListRequest(conn ISocket, msg string) {
 
 	response := SerializeMessage(SERVER_COLOR_LIST, &ColorList{Colors: colors, ColorNames: names})
 
+	// Make it wait so the client has time to
+	// catch up.
+	time.Sleep(500 * time.Millisecond)
+
 	conn.Write(response)
 }
 
@@ -293,6 +303,10 @@ func roomListRequest(conn ISocket, msg string) {
 
 	response := SerializeMessage(SERVER_ROOM_LIST, &RoomList{RoomIDs: roomIds, RoomNames: names})
 
+	// Make it wait so the client has time to
+	// catch up.
+	time.Sleep(500 * time.Millisecond)
+
 	conn.Write(response)
 }
 
@@ -305,9 +319,11 @@ func ProcessMessage(conn ISocket, message []byte) {
 	case CLIENT_REGISTER_USER:
 		registerUser(conn, msgContent)
 	case CLIENT_COLOR_LIST_REQUEST:
-		colorListRequest(conn, msgContent)
+		// go routine because there's a delay inside
+		go colorListRequest(conn, msgContent)
 	case CLIENT_ROOM_LIST_REQUEST:
-		roomListRequest(conn, msgContent)
+		// go routine because there's a delay inside
+		go roomListRequest(conn, msgContent)
 	case CLIENT_PING:
 		ping(conn, msgContent)
 	case CLIENT_SEND_MESSAGE:

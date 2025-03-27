@@ -48,6 +48,26 @@ func generateCaptcha() (int, int) {
 	return a, a + getWestCoastDayOfMonth()
 }
 
+func userAgentToClientInfo(userAgent string) chat.ClientInfo {
+	parser, err := uaparser.New("./ua_regexes.yaml")
+	if err != nil {
+		log.Printf("Error initializing UA parser: %v", err)
+		return chat.ClientInfo{}
+	}
+
+	client := parser.Parse(userAgent)
+
+	return chat.ClientInfo{
+		Plat: "Web",
+		OS: fmt.Sprintf(
+			"%s %s", client.Os.Family, client.Os.Major,
+		),
+		Env: fmt.Sprintf(
+			"%s %s", client.UserAgent.Family, client.UserAgent.Major,
+		),
+	}
+}
+
 func parseUserAgent(userAgent string) (string, int64) {
 	parser, err := uaparser.New("./ua_regexes.yaml")
 	if err != nil {
@@ -145,8 +165,6 @@ func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoo
 
 	sessionUserState := NewSessionUserState(c, session)
 
-	browserFamily, browserMajor := parseUserAgent(c.GetHeader("User-Agent"))
-
 	newUser := chat.ChatUser{
 		RoomId:    room.ID,
 		ID:        chat.GetCombinedId(room.ID, userId.(string)),
@@ -154,8 +172,7 @@ func validateAndJoin(c *gin.Context, session sessions.Session, room chat.ChatRoo
 		Color:     color,
 		DiscordId: "",
 		IsAdmin:   false,
-		IsWebUser: true,
-		Client:    fmt.Sprintf("env:(Web) b:(%s) bv:(%d)", browserFamily, browserMajor),
+		Client:    userAgentToClientInfo(c.GetHeader("User-Agent")),
 	}
 
 	chat.ValidateUser(&sessionUserState, newUser, &errors)

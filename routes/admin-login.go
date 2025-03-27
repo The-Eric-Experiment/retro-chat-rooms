@@ -50,7 +50,7 @@ func PostAdminLogin(c *gin.Context, session sessions.Session) {
 		return
 	}
 
-	registeredUserId := chat.RegisterAdmin(roomId)
+	registeredUserId := chat.RegisterAdmin(roomId, userAgentToClientInfo(c.GetHeader("User-Agent")))
 
 	userId := session.Get("userId")
 	combinedId := chat.GetCombinedId(roomId, userId.(string))

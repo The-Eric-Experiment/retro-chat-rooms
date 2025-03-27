@@ -79,6 +79,8 @@ type ServerMessageSent struct {
 	SystemMessageSubject string `fieldOrder:"7"`
 	IsHistory            string `fieldOrder:"8"`
 	Message              string `fieldOrder:"9"`
+	Source               string `fieldOrder:"10"`
+	ShowClientIcon       string `fieldOrder:"11"`
 }
 
 type ServerTimeMessage struct {
