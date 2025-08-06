@@ -93,7 +93,7 @@ func (bot *DiscordBot) Close() {
 }
 
 func (bot *DiscordBot) SendMessage(channel string, message *chat.ChatMessage) {
-	if bot.session == nil || channel == "" || message.Privately {
+	if bot.session == nil || channel == "" || message.Privately || message.Source == chat.MSG_SOURCE_DISCORD {
 		return
 	}
 

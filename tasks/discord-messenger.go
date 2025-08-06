@@ -85,8 +85,12 @@ func OnReceiveDiscordMessage(m *discordgo.MessageCreate) {
 		SpeechMode:      chat.MODE_SAY_TO,
 		To:              to,
 		IsSystemMessage: false,
-		Source:          chat.ClientInfoToMsgSource(user.Client),
-		ShowClientIcon:  true,
-		InvolvedUsers:   involvedUsers,
+		// There's no point in using chat.ClientInfoToMsgSource(user.Client) here
+		// as these messages are always form discord and there are users, like
+		// the owner, who can be logged in via any client, which makes them not
+		// necessarily have the client info, which makes the source empty.
+		Source:         chat.MSG_SOURCE_DISCORD,
+		ShowClientIcon: true,
+		InvolvedUsers:  involvedUsers,
 	})
 }

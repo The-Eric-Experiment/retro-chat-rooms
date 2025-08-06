@@ -4,3 +4,4 @@ config.yaml
 public/
 _public/
 retro-chat-rooms
+__debug_bin*
