@@ -27,7 +27,7 @@ func readLines(path string) ([]string, error) {
 }
 
 var censored []string
-var blocked []string
+var blockedRegexes []*regexp.Regexp
 
 func LoadProfanityFilters() {
 	var err error
@@ -36,9 +36,15 @@ func LoadProfanityFilters() {
 		panic(err)
 	}
 
-	blocked, err = readLines("profanity/fully-blocked-profanity.txt")
+	blocked, err := readLines("profanity/fully-blocked-profanity.txt")
 	if err != nil {
 		panic(err)
+	}
+
+	for _, word := range blocked {
+		// Using word boundaries for better matching
+		pattern := `(?i)\b` + regexp.QuoteMeta(strings.TrimSpace(word)) + `\b`
+		blockedRegexes = append(blockedRegexes, regexp.MustCompile(pattern))
 	}
 }
 
@@ -68,17 +74,30 @@ func ReplaceSensoredProfanity(input string) string {
 	return strings.Join(words, " ")
 }
 
-func HasBlockedWords(input string) bool {
+// ReplaceUnderscores replaces all underscores with spaces
+func replaceUnderscores(text string) string {
+	return strings.ReplaceAll(text, "_", " ")
+}
 
-	for _, b := range blocked {
-		blockedRegex := regexp.MustCompile(`(?i)(^|[^a-zA-Z])` + b + `($|[^a-zA-Z])`)
-
-		if blockedRegex.MatchString(input) {
+func hasBlockedWords(input string, blockedRegexes []*regexp.Regexp) bool {
+	camelCase := normalizeTextPreserveCase(input)
+	camelCase = replaceUnderscores(camelCase)
+	camelCase = splitCamelCase(camelCase)
+	input = normalizeText(input)
+	input = replaceUnderscores(input)
+	for _, regex := range blockedRegexes {
+		// we are checking camel case separately in case the user was
+		// typing the word with different cases and the slur would be
+		// split into two words
+		if regex.MatchString(input) || regex.MatchString(camelCase) {
 			return true
 		}
 	}
-
 	return false
+}
+
+func HasBlockedWords(input string) bool {
+	return hasBlockedWords(input, blockedRegexes)
 }
 
 func IsProfaneNickname(input string) bool {
